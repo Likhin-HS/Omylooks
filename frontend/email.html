@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Verification</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(to bottom, #ff9a9e, #fad0c4);
+    }
+
+    .container {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      text-align: center;
+    }
+
+    .container h2 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    .input-group {
+      display: flex;
+      align-items: center;
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .input-group input {
+      padding: 10px;
+      font-size: 1rem;
+      border: 2px solid #ccc;
+      border-radius: 5px;
+      outline: none;
+      flex: 1;
+      padding-right: 30px; /* Add padding to make space for the check mark */
+    }
+
+    .input-group span {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: none;
+      color: #4caf50; /* Default color for check mark */
+    }
+
+    .message {
+      font-size: 0.9rem;
+      margin-top: -10px;
+      margin-bottom: 10px;
+      color: #ff5252;
+    }
+
+    .message.valid {
+      color: #4caf50;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      background: #ccc;
+      color: #fff;
+      cursor: not-allowed;
+      transition: background 0.3s ease;
+    }
+
+    button.active {
+      background: #4caf50;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Verify Your Email</h2>
+    <div class="input-group">
+      <input type="email" id="email" placeholder="Enter email" maxlength="50">
+      <span id="status-check">✔</span>
+    </div>
+    <p class="message" id="message">Enter your email to receive OTP</p>
+    <button id="next-button" disabled>Next</button>
+  </div>
+
+  <script>
+    const emailInput = document.getElementById('email');
+    const statusCheck = document.getElementById('status-check');
+    const message = document.getElementById('message');
+    const nextButton = document.getElementById('next-button');
+
+    emailInput.addEventListener('input', () => {
+      const email = emailInput.value.trim();
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      if (!email) {
+        message.textContent = 'Email is required';
+        message.className = 'message';
+        statusCheck.style.display = 'inline';
+        statusCheck.textContent = '✖';
+        statusCheck.style.color = '#ff5252';
+        nextButton.disabled = true;
+        nextButton.classList.remove('active');
+        return;
+      }
+
+      if (!emailPattern.test(email)) {
+        message.textContent = 'Invalid email format';
+        message.className = 'message';
+        statusCheck.style.display = 'inline';
+        statusCheck.textContent = '✖';
+        statusCheck.style.color = '#ff5252';
+        nextButton.disabled = true;
+        nextButton.classList.remove('active');
+        return;
+      }
+
+      message.textContent = 'Email is valid';
+      message.className = 'message valid';
+      statusCheck.style.display = 'inline';
+      statusCheck.textContent = '✔';
+      statusCheck.style.color = '#4caf50';
+      nextButton.disabled = false;
+      nextButton.classList.add('active');
+    });
+
+    nextButton.addEventListener('click', () => {
+      const email = emailInput.value.trim();
+      const username = localStorage.getItem('username');
+
+      if (!username) {
+        alert('Username is missing. Please go back and enter your username.');
+        return;
+      }
+
+      fetch(`http://localhost:3000/check-email?email=${email}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.message === 'Email is available') {
+            // Upload email to the backend
+            fetch('http://localhost:3000/register-email', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email, username })
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.message === 'Email updated successfully') {
+                localStorage.setItem('email', email); // Store email in localStorage
+                // Send OTP to the registered email
+                fetch('http://localhost:3000/send-otp', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ email })
+                })
+                .then(response => response.json())
+                .then(data => {
+                  if (data.message === 'OTP sent successfully') {
+                    alert('OTP has been sent to your email. Please check your inbox.');
+                    window.location.href = 'otp.html'; // Redirect to OTP page
+                  } else {
+                    alert(data.message || 'Error sending OTP.');
+                  }
+                })
+                .catch(error => {
+                  console.error('Error:', error);
+                  alert('Failed to send OTP.');
+                });
+              } else {
+                alert(data.message || 'Error registering email.');
+              }
+            })
+            .catch(error => {
+              console.error('Error:', error);
+              alert('Failed to register email.');
+            });
+          } else {
+            alert('Email is already taken.');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Failed to check email availability.');
+        });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enter Username</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(to bottom, #ff9a9e, #fad0c4);
+    }
+
+    .container {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      text-align: center;
+    }
+
+    .container h2 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    .input-group {
+      display: flex;
+      align-items: center;
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .input-group input {
+      padding: 10px;
+      font-size: 1rem;
+      border: 2px solid #ccc;
+      border-radius: 5px;
+      outline: none;
+      flex: 1;
+    }
+
+    .input-group img {
+      width: 20px;
+      height: 20px;
+      position: absolute;
+      right: 10px;
+    }
+
+    .message {
+      font-size: 0.9rem;
+      margin-top: -10px;
+      margin-bottom: 10px;
+      color: #ff5252;
+    }
+
+    .message.available {
+      color: #4caf50;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      background: #ccc;
+      color: #fff;
+      cursor: not-allowed;
+      transition: background 0.3s ease;
+    }
+
+    button.active {
+      background: #4caf50;
+      cursor: pointer;
+    }
+
+    .input-group {
+      position: relative;
+    }
+
+    #username {
+      padding-right: 30px; /* Add padding to make space for the check mark */
+    }
+
+    #status-check {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: none;
+      color: #4caf50; /* Default color for check mark */
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Choose Your Username</h2>
+    <div class="input-group">
+      <input type="text" id="username" placeholder="Enter username" maxlength="50">
+      <span id="status-check">✔</span>
+    </div>
+    <p class="message" id="message">Enter a username to check availability</p>
+    <button id="next-button" disabled>Next</button>
+  </div>
+
+  <script>
+    const usernameInput = document.getElementById('username');
+    const statusCheck = document.getElementById('status-check');
+    const message = document.getElementById('message');
+    const nextButton = document.getElementById('next-button');
+
+    usernameInput.addEventListener('input', () => {
+      const username = usernameInput.value.trim();
+      const validUsername = /^[a-zA-Z0-9._]*$/;
+
+      if (username.length > 30) {
+        message.textContent = 'Character limit of 30 exceeded';
+        message.className = 'message';
+        statusCheck.style.display = 'inline';
+        statusCheck.textContent = '✖';
+        statusCheck.style.color = '#ff5252';
+        nextButton.disabled = true;
+        nextButton.classList.remove('active');
+        return;
+      } else if (username === '') {
+        // Reset UI
+        statusCheck.style.display = 'none';
+        message.textContent = 'Enter a username to check availability';
+        message.className = 'message';
+        nextButton.disabled = true;
+        nextButton.classList.remove('active');
+        return;
+      } else if (!validUsername.test(username) || !/[a-zA-Z]/.test(username)) {
+        // Invalid characters or no letters
+        statusCheck.style.display = 'inline';
+        statusCheck.textContent = '✖';
+        statusCheck.style.color = '#ff5252';
+        message.textContent = 'Username must contain at least one letter and only letters, numbers, underscores, and periods are allowed';
+        message.className = 'message';
+        nextButton.disabled = true;
+        nextButton.classList.remove('active');
+        return;
+      }
+
+      // Check username availability
+      fetch(`http://localhost:3000/check-username?username=${username}`)
+        .then((response) => {
+          if (response.ok) {
+            return response.json(); // Parse JSON for success responses
+          } else {
+            throw new Error('Username is already taken'); // Handle non-OK status
+          }
+        })
+        .then((data) => {
+          // Username is available
+          statusCheck.style.display = 'inline';
+          statusCheck.textContent = '✔';
+          statusCheck.style.color = '#4caf50';
+          message.textContent = 'Username is available';
+          message.className = 'message available';
+          nextButton.disabled = false;
+          nextButton.classList.add('active');
+        })
+        .catch((error) => {
+          // Username is already taken
+          statusCheck.style.display = 'inline';
+          statusCheck.textContent = '✖';
+          statusCheck.style.color = '#ff5252';
+          message.textContent = 'Username is already taken';
+          message.className = 'message';
+          nextButton.disabled = true;
+          nextButton.classList.remove('active');
+        });
+    });
+
+    // Trigger "Next" button click on Enter key press
+    usernameInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' && !nextButton.disabled) {
+        nextButton.click();
+      }
+    });
+
+    // Navigate to password.html on "Next" button click
+    nextButton.addEventListener('click', () => {
+      const username = usernameInput.value;
+      localStorage.setItem('username', username); // Store username in localStorage
+
+      fetch('http://localhost:3000/register-username', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username })
+      })
+      .then(response => {
+        if (response.ok) {
+          window.location.href = 'password.html';
+        } else {
+          throw new Error('Failed to register username');
+        }
+      })
+      .catch(error => {
+        message.textContent = error.message;
+        message.className = 'message';
+      });
+    });
+  </script>
+</body>
+</html>

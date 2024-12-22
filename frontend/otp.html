@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verification Pending</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(to bottom, #ff9a9e, #fad0c4);
+    }
+
+    .container {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      text-align: center;
+    }
+
+    .container h2 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    .input-group {
+      display: flex;
+      align-items: center;
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .input-group input {
+      padding: 10px;
+      font-size: 1rem;
+      border: 2px solid #ccc;
+      border-radius: 5px;
+      outline: none;
+      flex: 1;
+    }
+
+    .message {
+      font-size: 0.9rem;
+      margin-top: -10px;
+      margin-bottom: 10px;
+      color: #ff5252;
+    }
+
+    .message.valid {
+      color: #4caf50;
+    }
+
+    .message.success {
+      color: #4caf50;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      background: #4caf50;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Enter OTP</h2>
+    <p>Check your email for the OTP.</p>
+    <div class="input-group">
+      <input type="text" id="otp" maxlength="6" placeholder="Enter OTP" required>
+    </div>
+    <button id="verify-btn">Verify OTP</button>
+  </div>
+
+  <script>
+    document.getElementById('verify-btn').addEventListener('click', () => {
+      const otp = document.getElementById('otp').value;
+      const email = localStorage.getItem('email'); // Retrieve email from localStorage
+
+      if (!email) {
+        alert('Email is missing. Please go back and enter your email.');
+        return;
+      }
+
+      fetch('http://localhost:3000/verify-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email, // Include email in the request body
+          otp: otp, // OTP entered by the user
+        }),
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log(data); // Log the response data to the console
+        if (data && data.message === 'Email verified successfully' && data.token) {
+          localStorage.setItem('token', data.token); // Store the token in localStorage
+          alert('Verification Successful!');
+          window.location.href = 'create-profile.html'; // Redirect to profile creation page
+        } else {
+          alert(data.message || 'An error occurred!');
+        }
+      })
+      .catch(error => {
+        console.error('Error verifying OTP:', error);
+        alert('An error occurred!');
+      });
+    });
+  </script>
+</body>
+</html>
