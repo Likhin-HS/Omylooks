@@ -158,8 +158,7 @@
     let cropper;
 
     function skipUpload() {
-      alert('Skipped profile picture upload!');
-      window.location.href = '../Nav buttons/Profile/profile.html';
+      window.location.href = 'profile.html';
     }
 
     function previewImage(event) {
@@ -206,25 +205,49 @@
     async function goToNextPage() {
       if (cropper) {
         const canvas = cropper.getCroppedCanvas();
-        const imageData = canvas.toDataURL('image/png');
+        canvas.toBlob(async (blob) => {
+          const formData = new FormData();
+          formData.append('image', blob, 'profile-picture.png');
 
-        // Send the image data to the server
-        const response = await fetch('http://localhost:3000/upload-profile-picture', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}` // Include JWT token
-          },
-          body: JSON.stringify({ image: imageData })
-        });
+          // Send the image data to the server
+          console.log('Sending image data to server...');
+          const response = await fetch('http://localhost:3000/upload-profile-picture', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}` // Include JWT token
+            },
+            body: formData
+          });
 
-        if (response.ok) {
-          window.location.href = '../Nav buttons/Profile/profile.html';
-        } else {
-          alert('Failed to upload profile picture');
-        }
+          if (response.ok) {
+            window.location.href = 'profile.html'; // Redirect to profile.html
+          } else {
+            const errorData = await response.json();
+            console.error('Failed to upload profile picture:', errorData.error);
+            alert(`Failed to upload profile picture: ${errorData.error}`);
+          }
+        }, 'image/png');
+      } else {
+        alert('Please upload and crop a profile picture before proceeding.');
       }
     }
+
+    // Comment out WebSocket connection code
+    /*
+    const ws = new WebSocket('ws://localhost:3000');
+    ws.onopen = () => {
+      console.log('WebSocket connection opened');
+    };
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+    ws.onmessage = (message) => {
+      console.log('WebSocket message received:', message.data);
+    };
+    ws.onclose = () => {
+      console.log('WebSocket connection closed');
+    };
+    */
   </script>
 </body>
 </html>

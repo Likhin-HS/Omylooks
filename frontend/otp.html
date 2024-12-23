@@ -88,6 +88,11 @@
       const otp = document.getElementById('otp').value;
       const email = localStorage.getItem('email'); // Retrieve email from localStorage
 
+      if (!otp) {
+        alert('Please enter OTP.');
+        return;
+      }
+
       if (!email) {
         alert('Email is missing. Please go back and enter your email.');
         return;
@@ -111,7 +116,7 @@
           alert('Verification Successful!');
           window.location.href = 'create-profile.html'; // Redirect to profile creation page
         } else {
-          alert(data.message || 'An error occurred!');
+          alert(data.message || 'Incorrect OTP. Please try again.');
         }
       })
       .catch(error => {

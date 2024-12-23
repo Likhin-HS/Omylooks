@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile Page</title>
+  <link rel="stylesheet" href="css/profile.css">
+</head>
+<body>
+  <div class="profile-container">
+    <!-- Username -->
+    <div class="username">
+      <h1>Username</h1>
+    </div>
+    <!-- Profile Info -->
+    <div class="profile-info">
+      <div class="profile-picture">
+        <img src="" alt="Profile Picture" id="profile-picture">
+      </div>
+      <div class="description">
+        <p>Name: Andrew</p>
+        <p>Age: 35</p>
+        <p>Country: Romania</p>
+        <p>Gender: Male</p>
+        <p>Height: 170cm</p>
+      </div>
+    </div>
+    <!-- Stats -->
+    <div class="stats">
+      <div><strong>10</strong> Posts</div>
+      <div><strong>200</strong> Followers</div>
+      <div><strong>180</strong> Following</div>
+    </div>
+    <!-- Buttons -->
+    <div class="profile-buttons">
+      <button onclick="window.location.href='../../Homepage/create-profile.html'">Edit Profile</button>
+      <button>My Status</button>
+    </div>
+    <!-- Horizontal Line -->
+    <hr class="divider">
+    <!-- Photo Grid -->
+    <div class="photo-grid" id="photo-grid">
+      <!-- Photos will be dynamically loaded here -->
+    </div>
+  </div>
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav">
+    <button onclick="window.location.href='../Search/search.html'">Search</button>
+    <button onclick="window.location.href='../Upload/upload.html'">New Upload</button>
+    <button onclick="window.location.href='../../Mainpage/rating.html'">Home</button>
+    <button onclick="window.location.href='../Leaderboard/leaderboard.html'">Leaderboard</button>
+    <button onclick="window.location.href='profile.html'">Profile</button>
+  </div>
+
+  <!-- Modal Structure -->
+  <div id="photo-modal" class="modal">
+    <span class="close">&times;</span>
+    <span class="prev">&lt;</span>
+    <img class="modal-content" id="modal-img">
+    <span class="next">&gt;</span>
+    <div id="modal-caption"></div>
+  </div>
+
+  <script>
+    // Fetch the user's profile picture and photos when the page loads
+  window.onload = () => {
+    const token = localStorage.getItem('token');
+    
+    // Fetch user profile
+    fetch('http://localhost:3000/user-profile', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data.profilePictureUrl) {
+          document.getElementById('profile-picture').src = data.profilePictureUrl;
+        }
+      })
+      .catch(error => console.error('Error fetching profile:', error));
+
+    // Fetch user photos
+    fetchPhotos();
+  };
+
+  function fetchPhotos() {
+    const token = localStorage.getItem('token'); 
+    
+    fetch('http://localhost:3000/profile', {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json();
+    })
+    .then(data => {
+      const photoGrid = document.getElementById('photo-grid');
+      photoGrid.innerHTML = '';
+      // Add code to dynamically load photos into the photo grid
+    })
+    .catch(error => console.error('Error fetching photos:', error));
+  }
+  
+    function fetchPhotos() {
+      const token = localStorage.getItem('token'); 
+      
+      fetch('http://localhost:3000/profile', {
+        method: 'GET',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        const photoGrid = document.getElementById('photo-grid');
+        photoGrid.innerHTML = '';
+  
+        data.forEach(photo => {
+          const photoItem = document.createElement('div');
+          photoItem.classList.add('photo');
+          photoItem.dataset.country = photo.country;
+          photoItem.dataset.height = photo.height;
+          photoItem.dataset.build = photo.build;
+          photoItem.dataset.profession = photo.profession;
+  
+          // Image element
+          const img = document.createElement('img');
+          img.src = photo.photoUrl;
+          img.alt = "User photo";
+  
+          // Average Rating at the Top
+          const avgRatingInfo = document.createElement('div');
+          avgRatingInfo.classList.add('rating-info', 'top-rating');
+          avgRatingInfo.innerHTML = generateStars(photo.averageRating) + 
+          ` ${photo.averageRating}/10`;
+  
+          // Total Ratings at the Bottom
+          const totalRatingsInfo = document.createElement('div');
+          totalRatingsInfo.classList.add('rating-info', 'bottom-rating');
+          totalRatingsInfo.textContent = `▷ ${photo.totalRatings}`;
+  
+          // Append all elements
+          photoItem.appendChild(avgRatingInfo); // Top rating
+          photoItem.appendChild(img);
+          photoItem.appendChild(totalRatingsInfo); // Bottom rating
+          photoGrid.appendChild(photoItem);
+        });
+      })
+      .catch(error => console.error('Error fetching photos:', error));
+    }
+  
+    function generateStars(average) {
+    const fullStars = Math.floor(average);
+    const halfStar = average % 1 >= 0.5 ? 1 : 0;
+
+    let stars = '★'.repeat(fullStars); // Full stars
+    if (halfStar) stars += '☆'; // Half star
+
+    let color;
+    if (average >= 8) {
+      color = 'gold';
+    } else if (average >= 5) {
+      color = 'silver';
+    } else {
+      color = '#cd7f32';
+    }
+
+    return `<span style="color: ${color}; font-size: 16px;">${stars}</span>`;
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const photoGrid = document.getElementById('photo-grid');
+    const modal = document.getElementById('photo-modal');
+    const modalImg = document.getElementById('modal-img');
+    const modalCaption = document.getElementById('modal-caption');
+    const closeModal = document.getElementsByClassName('close')[0];
+    const prevBtn = document.getElementsByClassName('prev')[0];
+    const nextBtn = document.getElementsByClassName('next')[0];
+    let currentPhotoIndex = 0;
+    let photos = [];
+
+    photoGrid.addEventListener('click', (event) => {
+      if (event.target.tagName === 'IMG') {
+        photos = Array.from(photoGrid.getElementsByClassName('photo'));
+        currentPhotoIndex = photos.findIndex(photo => photo.contains(event.target));
+        showModal(currentPhotoIndex);
+      }
+    });
+
+    closeModal.onclick = function() {
+      modal.style.display = 'none';
+    };
+
+    prevBtn.onclick = function() {
+      if (currentPhotoIndex > 0) {
+        currentPhotoIndex--;
+        showModal(currentPhotoIndex);
+      }
+    };
+
+    nextBtn.onclick = function() {
+      if (currentPhotoIndex < photos.length - 1) {
+        currentPhotoIndex++;
+        showModal(currentPhotoIndex);
+      }
+    };
+
+     // Mapping of country codes to country names
+     const countryMapping = {
+      "AF": "Afghanistan",
+      "AL": "Albania",
+      "DZ": "Algeria",
+      "AD": "Andorra",
+      "AO": "Angola",
+      "AR": "Argentina",
+      "AM": "Armenia",
+      "AU": "Australia",
+      "AT": "Austria",
+      "AZ": "Azerbaijan",
+      "BS": "Bahamas",
+      "BH": "Bahrain",
+      "BD": "Bangladesh",
+      "BB": "Barbados",
+      "BY": "Belarus",
+      "BE": "Belgium",
+      "BZ": "Belize",
+      "BJ": "Benin",
+      "BT": "Bhutan",
+      "BO": "Bolivia",
+      "BA": "Bosnia and Herzegovina",
+      "BW": "Botswana",
+      "BR": "Brazil",
+      "BN": "Brunei",
+      "BG": "Bulgaria",
+      "BF": "Burkina Faso",
+      "BI": "Burundi",
+      "KH": "Cambodia",
+      "CM": "Cameroon",
+      "CA": "Canada",
+      "CV": "Cape Verde",
+      "CF": "Central African Republic",
+      "TD": "Chad",
+      "CL": "Chile",
+      "CN": "China",
+      "CO": "Colombia",
+      "KM": "Comoros",
+      "CG": "Congo",
+      "CR": "Costa Rica",
+      "CI": "Côte d'Ivoire",
+      "HR": "Croatia",
+      "CU": "Cuba",
+      "CY": "Cyprus",
+      "CZ": "Czech Republic",
+      "DK": "Denmark",
+      "DJ": "Djibouti",
+      "DM": "Dominica",
+      "DO": "Dominican Republic",
+      "EC": "Ecuador",
+      "EG": "Egypt",
+      "SV": "El Salvador",
+      "GQ": "Equatorial Guinea",
+      "ER": "Eritrea",
+      "EE": "Estonia",
+      "ET": "Ethiopia",
+      "FJ": "Fiji",
+      "FI": "Finland",
+      "FR": "France",
+      "GA": "Gabon",
+      "GM": "Gambia",
+      "GE": "Georgia",
+      "DE": "Germany",
+      "GH": "Ghana",
+      "GR": "Greece",
+      "GD": "Grenada",
+      "GT": "Guatemala",
+      "GN": "Guinea",
+      "GW": "Guinea-Bissau",
+      "GY": "Guyana",
+      "HT": "Haiti",
+      "HN": "Honduras",
+      "HU": "Hungary",
+      "IS": "Iceland",
+      "IN": "India",
+      "ID": "Indonesia",
+      "IR": "Iran",
+      "IQ": "Iraq",
+      "IE": "Ireland",
+      "IL": "Israel",
+      "IT": "Italy",
+      "JM": "Jamaica",
+      "JP": "Japan",
+      "JO": "Jordan",
+      "KZ": "Kazakhstan",
+      "KE": "Kenya",
+      "KI": "Kiribati",
+      "KP": "North Korea",
+      "KR": "South Korea",
+      "KW": "Kuwait",
+      "KG": "Kyrgyzstan",
+      "LA": "Laos",
+      "LV": "Latvia",
+      "LB": "Lebanon",
+      "LS": "Lesotho",
+      "LR": "Liberia",
+      "LY": "Libya",
+      "LI": "Liechtenstein",
+      "LT": "Lithuania",
+      "LU": "Luxembourg",
+      "MG": "Madagascar",
+      "MW": "Malawi",
+      "MY": "Malaysia",
+      "MV": "Maldives",
+      "ML": "Mali",
+      "MT": "Malta",
+      "MH": "Marshall Islands",
+      "MR": "Mauritania",
+      "MU": "Mauritius",
+      "MX": "Mexico",
+      "FM": "Micronesia",
+      "MD": "Moldova",
+      "MC": "Monaco",
+      "MN": "Mongolia",
+      "ME": "Montenegro",
+      "MA": "Morocco",
+      "MZ": "Mozambique",
+      "MM": "Myanmar",
+      "NA": "Namibia",
+      "NR": "Nauru",
+      "NP": "Nepal",
+      "NL": "Netherlands",
+      "NZ": "New Zealand",
+      "NI": "Nicaragua",
+      "NE": "Niger",
+      "NG": "Nigeria",
+      "NO": "Norway",
+      "OM": "Oman",
+      "PK": "Pakistan",
+      "PW": "Palau",
+      "PS": "Palestine",
+      "PA": "Panama",
+      "PG": "Papua New Guinea",
+      "PY": "Paraguay",
+      "PE": "Peru",
+      "PH": "Philippines",
+      "PL": "Poland",
+      "PT": "Portugal",
+      "QA": "Qatar",
+      "RO": "Romania",
+      "RU": "Russia",
+      "RW": "Rwanda",
+      "WS": "Samoa",
+      "SM": "San Marino",
+      "SA": "Saudi Arabia",
+      "SN": "Senegal",
+      "RS": "Serbia",
+      "SC": "Seychelles",
+      "SL": "Sierra Leone",
+      "SG": "Singapore",
+      "SK": "Slovakia",
+      "SI": "Slovenia",
+      "SB": "Solomon Islands",
+      "SO": "Somalia",
+      "ZA": "South Africa",
+      "ES": "Spain",
+      "LK": "Sri Lanka",
+      "SD": "Sudan",
+      "SR": "Suriname",
+      "SE": "Sweden",
+      "CH": "Switzerland",
+      "SY": "Syria",
+      "TW": "Taiwan",
+      "TJ": "Tajikistan",
+      "TZ": "Tanzania",
+      "TH": "Thailand",
+      "TL": "Timor-Leste",
+      "TG": "Togo",
+      "TO": "Tonga",
+      "TT": "Trinidad and Tobago",
+      "TN": "Tunisia",
+      "TR": "Turkey",
+      "TM": "Turkmenistan",
+      "TV": "Tuvalu",
+      "UG": "Uganda",
+      "UA": "Ukraine",
+      "AE": "United Arab Emirates",
+      "US": "United States",
+      "UY": "Uruguay",
+      "UZ": "Uzbekistan",
+      "VU": "Vanuatu",
+      "VE": "Venezuela",
+      "VN": "Vietnam",
+      "YE": "Yemen",
+      "ZM": "Zambia",
+      "ZW": "Zimbabwe"
+    };
+
+    function showModal(index) {
+      const photo = photos[index];
+      const img = photo.querySelector('img');
+      const country = photo.dataset.country;
+      const height = photo.dataset.height;
+      const build = photo.dataset.build;
+      const profession = photo.dataset.profession;
+      const averageRating = photo.querySelector('.top-rating').innerHTML;
+      const totalRatings = photo.querySelector('.bottom-rating').innerHTML;
+
+      modalImg.src = img.src;
+
+      let detailsHTML = '';
+      if (country) detailsHTML += `<p>Country: ${countryMapping[country] || country}</p>`;
+      if (height) detailsHTML += `<p>Height: ${height} cm </p>`;
+      if (build) detailsHTML += `<p>Build: ${build}</p>`;
+      if (profession) detailsHTML += `<p>Profession: ${profession}</p>`;
+
+      const ratingsClass = detailsHTML ? '' : 'centered-ratings';
+
+      modalCaption.innerHTML = `
+        <div class="modal-info">
+          <div class="details">
+            ${detailsHTML}
+          </div>
+          <div class="ratings ${ratingsClass}">
+            <div class="average-rating">${averageRating}</div>
+            <div>${totalRatings}</div>
+          </div>
+        </div>
+      `;
+      modal.style.display = 'block';
+    
+      prevBtn.style.display = index === 0 ? 'none' : 'block';
+      nextBtn.style.display = index === photos.length - 1 ? 'none' : 'block';
+    }
+  });
+  </script>
+</body>
+</html>

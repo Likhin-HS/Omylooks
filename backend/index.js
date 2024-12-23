@@ -5,6 +5,10 @@ const cors = require("cors");
 const bcrypt = require('bcrypt'); // Add bcrypt library
 const nodemailer = require('nodemailer'); // Add nodemailer library
 const jwt = require('jsonwebtoken'); // Add JWT library
+const multer = require('multer'); // Add multer for file uploads
+const fs = require('fs'); // Add fs for file system operations
+const http = require('http'); // Add http for WebSocket server
+const WebSocket = require('ws'); // Add WebSocket library
 require('dotenv').config();
 
 const app = express();
@@ -12,7 +16,10 @@ const port = 3000;
 
 // Middleware
 app.use(cors());
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '10mb' })); // Increase limit for base64 image data
+
+// Serve static files from the uploads directory
+app.use('/uploads', express.static('uploads'));
 
 // Database connection
 const db = mysql.createConnection({
@@ -30,6 +37,24 @@ db.connect((err) => {
   console.log("Connected to MySQL database.");
 });
 
+// Ensure profile table exists
+const createProfileTableQuery = `
+  CREATE TABLE IF NOT EXISTS profile (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    profile_picture VARCHAR(255),
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+  )
+`;
+
+db.query(createProfileTableQuery, (err, results) => {
+  if (err) {
+    console.error("Error creating profile table:", err);
+  } else {
+    console.log("Profile table ensured.");
+  }
+});
+
 // Configure nodemailer
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -43,6 +68,17 @@ const transporter = nodemailer.createTransport({
 if (!process.env.JWT_SECRET) {
   throw new Error("JWT_SECRET must be defined in the environment variables");
 }
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  }
+});
+const upload = multer({ storage: storage });
 
 // Route: Check Username
 app.get("/check-username", (req, res) => {
@@ -174,38 +210,30 @@ app.post("/send-otp", (req, res) => {
   }
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString(); // Generate a 6-digit OTP
+  const otpExpiry = new Date(Date.now() + 5 * 60000); // Set OTP expiry time to 5 minutes from now
 
-  // Save OTP to the database
-  const query = "UPDATE users SET otp = ? WHERE email = ?";
-  db.query(query, [otp, email], (err, results) => {
+  // Save OTP and expiry time to the database
+  const query = "UPDATE users SET otp = ?, otp_expiry = ? WHERE email = ?";
+  db.query(query, [otp, otpExpiry, email], (err, results) => {
     if (err) {
       console.error("Database error:", err);
       return res.status(500).json({ error: "Database error" });
     }
 
-    // Verify that the OTP was stored correctly
-    const verifyQuery = "SELECT otp FROM users WHERE email = ?";
-    db.query(verifyQuery, [email], (verifyErr, verifyResults) => {
-      if (verifyErr) {
-        console.error("Database error:", verifyErr);
-        return res.status(500).json({ error: "Database error" });
+    // Send OTP email
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Your OTP Code',
+      text: `Your OTP code is ${otp}`
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error("Error sending OTP email:", error);
+        return res.status(500).json({ error: "Error sending OTP email" });
       }
-
-      // Send OTP email
-      const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: 'Your OTP Code',
-        text: `Your OTP code is ${otp}`
-      };
-
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          console.error("Error sending OTP email:", error);
-          return res.status(500).json({ error: "Error sending OTP email" });
-        }
-        res.status(200).json({ message: "OTP sent successfully" });
-      });
+      res.status(200).json({ message: "OTP sent successfully" });
     });
   });
 });
@@ -219,7 +247,7 @@ app.post("/verify-otp", (req, res) => {
     return res.status(400).json({ error: "Email and OTP are required" });
   }
 
-  const query = "SELECT otp FROM users WHERE email = ?";
+  const query = "SELECT otp, otp_expiry FROM users WHERE email = ?";
   db.query(query, [email], (err, results) => {
     if (err) {
       console.error("Database error:", err);
@@ -232,10 +260,16 @@ app.post("/verify-otp", (req, res) => {
     }
 
     const storedOtp = results[0].otp;
+    const otpExpiry = new Date(results[0].otp_expiry);
 
     if (storedOtp !== otp) {
       console.error("Invalid OTP");
       return res.status(400).json({ error: "Invalid OTP" });
+    }
+
+    if (otpExpiry < new Date()) {
+      console.error("OTP has expired");
+      return res.status(400).json({ error: "OTP has expired" });
     }
 
     // Update user as verified and generate token
@@ -254,7 +288,145 @@ app.post("/verify-otp", (req, res) => {
   });
 });
 
+// Route: Upload Profile Picture
+app.post('/upload-profile-picture', upload.single('image'), (req, res) => {
+  const token = req.headers.authorization.split(' ')[1];
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (err) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+  const email = decoded.email;
+
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+
+  const profilePicturePath = req.file.path;
+
+  // Get user_id from users table
+  const getUserQuery = "SELECT user_id FROM users WHERE email = ?";
+  db.query(getUserQuery, [email], (err, results) => {
+    if (err) {
+      console.error("Database error:", err);
+      return res.status(500).json({ error: "Database error" });
+    }
+
+    if (results.length === 0) {
+      return res.status(400).json({ error: "User not found" });
+    }
+
+    const userId = results[0].user_id;
+
+    // Check if profile exists for the user
+    const checkProfileQuery = "SELECT * FROM profile WHERE user_id = ?";
+    db.query(checkProfileQuery, [userId], (err, profileResults) => {
+      if (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Database error" });
+      }
+
+      if (profileResults.length === 0) {
+        // Insert new profile if it doesn't exist
+        const insertProfileQuery = "INSERT INTO profile (user_id, profile_picture) VALUES (?, ?)";
+        db.query(insertProfileQuery, [userId, profilePicturePath], (err, insertResults) => {
+          if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Database error" });
+          }
+
+          res.status(200).json({ message: "Profile picture uploaded successfully" });
+        });
+      } else {
+        // Update profile picture if profile exists
+        const updateProfileQuery = "UPDATE profile SET profile_picture = ? WHERE user_id = ?";
+        db.query(updateProfileQuery, [profilePicturePath, userId], (err, updateResults) => {
+          if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Database error" });
+          }
+
+          res.status(200).json({ message: "Profile picture uploaded successfully" });
+        });
+      }
+    });
+  });
+});
+
+// Route: Get User Profile
+app.get('/user-profile', (req, res) => {
+  const token = req.headers.authorization.split(' ')[1];
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (err) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+  const email = decoded.email;
+
+  const query = "SELECT profile_picture FROM profile JOIN users ON profile.user_id = users.user_id WHERE users.email = ?";
+  db.query(query, [email], (err, results) => {
+    if (err) {
+      console.error("Database error:", err);
+      return res.status(500).json({ error: "Database error" });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
+
+    const profilePictureUrl = results[0].profile_picture ? `http://localhost:3000/${results[0].profile_picture}` : null;
+    res.status(200).json({ profilePictureUrl });
+  });
+});
+
+// Route: Get User Photos
+app.get('/profile', (req, res) => {
+  const token = req.headers.authorization.split(' ')[1];
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (err) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+  const email = decoded.email;
+
+  const query = "SELECT * FROM photos WHERE user_id = (SELECT user_id FROM users WHERE email = ?)";
+  db.query(query, [email], (err, results) => {
+    if (err) {
+      console.error("Database error:", err);
+      return res.status(500).json({ error: "Database error" });
+    }
+
+    res.status(200).json(results);
+  });
+});
+
+// Create HTTP server
+const server = http.createServer(app);
+
+// Create WebSocket server
+const wss = new WebSocket.Server({ server });
+
+// Handle WebSocket connections
+wss.on('connection', (ws) => {
+  console.log('WebSocket connection opened');
+
+  ws.on('message', (message) => {
+    console.log('WebSocket message received:', message);
+  });
+
+  ws.on('close', () => {
+    console.log('WebSocket connection closed');
+  });
+
+  ws.on('error', (error) => {
+    console.error('WebSocket error:', error);
+  });
+});
+
 // Start server
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
