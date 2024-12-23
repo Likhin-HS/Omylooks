@@ -1,7 +1,7 @@
 body {
   margin: 0;
   font-family: 'Roboto', sans-serif;
-  background: linear-gradient(to bottom, #ff9a9e, #fad0c4);
+  background: linear-gradient(to bottom, #000000, #2a5298); /* Changed gradient colors */
   color: #333;
   display: flex;
   flex-direction: column;
@@ -33,14 +33,14 @@ p {
   font-size: 1rem;
   font-weight: bold;
   color: #fff;
-  background: #ff7b7b;
+  background-color: #007bff;;
   border: none;
   border-radius: 25px;
   cursor: pointer;
   transition: background 0.3s ease;
 }
 .button:hover {
-  background: #ff5252;
+  background-color: #0056b3;
 }
 footer {
   position: absolute;

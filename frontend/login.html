@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(to bottom, #000000, #2a5298);
+    }
+
+    .container {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      text-align: center;
+    }
+
+    .container h2 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    .input-group {
+      display: flex;
+      align-items: center;
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .input-group input {
+      padding: 10px;
+      font-size: 1rem;
+      border: 2px solid #ccc;
+      border-radius: 5px;
+      outline: none;
+      flex: 1;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      background: #4caf50;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Login</h2>
+    <div class="input-group">
+      <input type="text" id="identifier" placeholder="Enter username or email" required>
+    </div>
+    <div class="input-group">
+      <input type="password" id="password" placeholder="Enter password" required>
+    </div>
+    <button id="login-btn">Login</button>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script>
+    document.getElementById('login-btn').addEventListener('click', async () => {
+      const identifier = document.getElementById('identifier').value;
+      const password = document.getElementById('password').value;
+
+      if (!identifier || !password) {
+        alert('Please enter both username/email and password.');
+        return;
+      }
+
+      try {
+        const response = await axios.post('http://localhost:3000/login', { identifier, password });
+        if (response.data.token) {
+          localStorage.setItem('token', response.data.token);
+          alert('Login Successful!');
+          window.location.href = 'profile.html'; // Redirect to profile page
+        } else {
+          alert('Login failed. Please check your credentials.');
+        }
+      } catch (error) {
+        alert('Login failed. Please check your credentials.');
+      }
+    });
+  </script>
+</body>
+</html>

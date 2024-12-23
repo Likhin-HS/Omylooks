@@ -1,0 +1,338 @@
+/* General Styles */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(to bottom, #000000, #2a5298);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  text-align: center;
+}
+
+.container {
+  margin-top: -30px;
+  margin-right: 10px;
+  margin-left: 10px;
+  max-width: 500px;
+  width: 90%;
+  padding: 20px;
+  background-color: #abc4ff;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eaeaea;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+}
+
+.logo {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+}
+
+.notification-icon {
+  position: relative;
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  background-image: url('notification-icon.png'); /* Replace with your icon path */
+  background-size: cover;
+  cursor: pointer;
+}
+
+.notification-icon::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 10px;
+  height: 10px;
+  background-color: red;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+/* Photo and Rating Section */
+main {
+  text-align: center;
+}
+
+.photo-container {
+  position: relative;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.photo {
+  width: 100%;
+  height: auto;
+  max-height: 500px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: url('images/placeholder.jpg') center center no-repeat; /* Add your placeholder image path */
+  background-size: cover;
+}
+
+.rating {
+  margin-top: 5px;
+  position: relative;
+}
+
+#rating-input {
+  width: 90%; /* Make the slider long */
+  height: 8px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #ffffff;
+  border: 2px solid #001972;
+  border-radius: 5px;
+  outline: none;
+  transition: background 0.3s;
+  margin: 0 auto;
+}
+
+#rating-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #4CAF50;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+#rating-input::-webkit-slider-thumb:hover {
+  background-color: #45a049;
+}
+
+#rating-input::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #4CAF50;
+  cursor: pointer;
+}
+
+#rating-input::-moz-range-thumb:hover {
+  background-color: #45a049;
+}
+
+/* Box above the slider to display the value */
+.slider-box {
+  position: relative;
+  width: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  padding: 5px 10px;
+  background: #fff;
+  border: 2px solid #ddd;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.slider {
+  margin-top: 10px;
+}
+
+#next-photo-btn {
+  margin-top: 14px;
+  padding: 10px 20px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background-color 0.3s, transform 0.2s ease;
+}
+
+#next-photo-btn:hover {
+  background-color: #45a049;
+  transform: translateY(-2px); /* Subtle hover animation */
+}
+
+/* Bottom Navigation Styles */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  background-color: #131432;
+  border-top: 1px solid #eaeaea;
+  padding: 10px 0;
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.bottom-nav button {
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: #ffffff;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.bottom-nav button:hover {
+  color: #ff5c8d;
+}
+
+/* Media Queries for Responsiveness */
+@media screen and (max-width: 600px) {
+  .container {
+    padding: 15px;
+  }
+
+  #rating-input {
+    width: 80%; /* Slightly smaller slider on mobile */
+  }
+
+  #next-photo-btn {
+    width: 100%;
+  }
+}
+
+/* Feedback Modal Styles */
+#feedback-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.8); /* Darker background for a premium feel */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out; /* Smooth fade-in effect */
+}
+
+#feedback-modal div {
+  background: linear-gradient(145deg, #ffffff, #f0f0f0); /* Soft gradient for modern look */
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2); /* Elevated card feel */
+  text-align: center;
+  animation: slideUp 0.4s ease-out; /* Smooth slide-in effect */
+}
+
+#feedback-modal p {
+  font-family: 'Roboto', sans-serif;
+  font-size: 18px;
+  margin: 10px 0;
+  color: #333;
+}
+
+#feedback-modal p strong {
+  color: #4CAF50; /* Highlight key points with a vibrant color */
+}
+
+#close-modal-btn {
+  margin-top: 20px;
+  padding: 10px 30px;
+  font-size: 16px;
+  font-weight: bold;
+  background: #4CAF50;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s ease;
+}
+
+#close-modal-btn:hover {
+  background: #45a049;
+  transform: translateY(-2px); /* Subtle hover animation */
+}
+
+#close-modal-btn:active {
+  transform: translateY(0); /* Reset animation on click */
+  background: #3e8e41;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Dropdown button styling */
+.details-dropdown {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 100;
+}
+
+#details-dropdown-btn {
+  padding: 5px 10px;
+  background-color: #434343cf;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+#details-dropdown-btn:hover {
+  background-color: #515151d7;
+}
+
+/* Uniform font style and spacing for details */
+.photo-details {
+  position: absolute;
+  top: 40px;
+  left: 10px;
+  background-color: #434343cf;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  padding: 10px;
+  border-radius: 5px;
+  width: 200px;
+  font-size: 14px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px; /* Consistent gap between items */
+}
+
+.photo-details p {
+  margin: 0; /* Remove any margin for consistent spacing */
+  line-height: 1.5; /* Set a consistent line height */
+  font-family: Arial, sans-serif; /* Ensure font-family consistency */
+  color: white;
+}
+
+.photo-details.hidden {
+  display: none;
+}

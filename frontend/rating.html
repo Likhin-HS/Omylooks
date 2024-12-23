@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Omylooks - Rate Photos</title>
+  <link rel="stylesheet" href="css/rating.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="logo">Omylooks</div>
+      <div class="notification-icon">
+        <button onclick="window.location.href='Notification/notification.html'">🔔</button>
+      </div>
+    </header>
+
+    <!-- Photo and Rating Section -->
+    <main>
+      <div class="photo-container">
+        <div class="details-dropdown">
+          <button id="details-dropdown-btn">Details ▼</button>
+          <div id="photo-details-box" class="photo-details hidden">
+            <p><strong>Country:</strong> <span id="photo-country">N/A</span></p>
+            <p><strong>Height:</strong> <span id="photo-height">N/A</span></p>
+            <p><strong>Build:</strong> <span id="photo-build">N/A</span></p>
+            <p><strong>Profession:</strong> <span id="photo-profession">N/A</span></p>
+          </div>
+        </div>
+        <div class="photo-wrapper">
+          <img id="photo" src="images/1734952717371-profile-picture.png" alt="Photo to rate" class="photo">
+        </div>
+        <div class="rating">
+          <!-- Box above the slider to display the rating value -->
+          <div class="slider-box" id="slider-box">5</div>
+          <div class="slider">
+            <input type="range" id="rating-input" min="1" max="10" step="1" value="5">
+         </div>
+          <button id="next-photo-btn">Next Photo</button>
+      </div>
+    </main>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav">
+    <button onclick="window.location.href='../Nav buttons/Search/search.html'">Search</button>
+    <button onclick="window.location.href='upload.html'">New Upload</button>
+    <button>Home</button>
+    <button onclick="window.location.href='../Nav buttons/Leaderboard/leaderboard.html'">Leaderboard</button>
+    <button onclick="window.location.href='profile.html'">Profile</button>
+  </div>
+
+  <!-- Include Axios library -->
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="js/rating.js"></script>
+  <script>
+    document.getElementById('next-photo-btn').addEventListener('click', fetchRandomPhoto);
+  </script>
+</body>
+</html>

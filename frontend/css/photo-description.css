@@ -1,0 +1,142 @@
+/* General body styling */
+body {
+  font-family: 'Arial', sans-serif;
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(to bottom, #000000, #2a5298);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+/* Back button styling */
+.back-button {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  padding: 10px 15px;
+  font-size: 18px;
+  color: #fff;
+  background-color: #313131;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.back-button:hover {
+  background-color: #45a049;
+  transform: scale(1.1); /* Slightly enlarge the button on hover */
+}
+
+/* Description container */
+.description-container {
+  width: 100%;
+  max-width: 550px;
+  margin: 20px auto;
+  background-color: #fff;
+  border-radius: 15px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: box-shadow 0.3s ease;
+}
+
+.description-container:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Hover effect for the container */
+}
+
+/* Photo preview */
+#photo-preview {
+  width: 100%;
+  max-height: 300px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  margin-bottom: 25px;
+}
+
+#photo-preview img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Form styling */
+form {
+  width: 100%;
+  display: flex;
+  flex-direction: column; /* Stack all form elements vertically */
+  gap: 20px; /* Spacing between elements */
+}
+
+label {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+input, textarea, select {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-sizing: border-box;
+  background-color: #f8f8f8;
+  color: #333;
+  transition: border-color 0.3s ease;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: #4CAF50; /* Highlight border on focus */
+  outline: none;
+}
+
+/* Textarea customization */
+textarea {
+  resize: none;
+  height: 120px; /* Set a fixed height for the textarea */
+}
+
+/* Submit button styling */
+button {
+  padding: 14px;
+  font-size: 18px;
+  color: #fff;
+  background-color: #007bff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+button:hover {
+  background-color: #0056b3;
+  transform: scale(1.05); /* Slight scale effect on hover */
+}
+
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* Small screen adjustments */
+@media (max-width: 600px) {
+  .description-container {
+    padding: 20px;
+  }
+
+  button {
+    font-size: 16px;
+    padding: 12px;
+  }
+}

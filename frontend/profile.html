@@ -13,28 +13,13 @@
       <h1>Username</h1>
     </div>
     <!-- Profile Info -->
-    <div class="profile-info">
-      <div class="profile-picture">
-        <img src="" alt="Profile Picture" id="profile-picture">
-      </div>
-      <div class="description">
-        <p>Name: Andrew</p>
-        <p>Age: 35</p>
-        <p>Country: Romania</p>
-        <p>Gender: Male</p>
-        <p>Height: 170cm</p>
-      </div>
-    </div>
-    <!-- Stats -->
-    <div class="stats">
-      <div><strong>10</strong> Posts</div>
-      <div><strong>200</strong> Followers</div>
-      <div><strong>180</strong> Following</div>
+    <div class="profile-picture">
+      <img src="images/default profile.png" alt="Profile Picture" id="profile-picture">
     </div>
     <!-- Buttons -->
     <div class="profile-buttons">
-      <button onclick="window.location.href='../../Homepage/create-profile.html'">Edit Profile</button>
-      <button>My Status</button>
+      <button onclick="window.location.href='create-profile.html'">Edit Profile</button>
+      <button>Shop</button>
     </div>
     <!-- Horizontal Line -->
     <hr class="divider">
@@ -46,8 +31,8 @@
   <!-- Bottom Navigation -->
   <div class="bottom-nav">
     <button onclick="window.location.href='../Search/search.html'">Search</button>
-    <button onclick="window.location.href='../Upload/upload.html'">New Upload</button>
-    <button onclick="window.location.href='../../Mainpage/rating.html'">Home</button>
+    <button onclick="window.location.href='upload.html'">New Upload</button>
+    <button onclick="window.location.href='rating.html'">Home</button>
     <button onclick="window.location.href='../Leaderboard/leaderboard.html'">Leaderboard</button>
     <button onclick="window.location.href='profile.html'">Profile</button>
   </div>
@@ -103,61 +88,40 @@
     .then(data => {
       const photoGrid = document.getElementById('photo-grid');
       photoGrid.innerHTML = '';
-      // Add code to dynamically load photos into the photo grid
+  
+      data.forEach(photo => {
+        const photoItem = document.createElement('div');
+        photoItem.classList.add('photo');
+        photoItem.dataset.country = photo.country;
+        photoItem.dataset.height = photo.height;
+        photoItem.dataset.build = photo.build;
+        photoItem.dataset.profession = photo.profession;
+  
+        // Image element
+        const img = document.createElement('img');
+        img.src = `http://localhost:3000/${photo.photo_url}`;
+        img.alt = "User photo";
+  
+        // Average Rating at the Top
+        const avgRatingInfo = document.createElement('div');
+        avgRatingInfo.classList.add('rating-info', 'top-rating');
+        avgRatingInfo.innerHTML = generateStars(photo.averageRating) + 
+        ` ${photo.averageRating}/10`;
+  
+        // Total Ratings at the Bottom
+        const totalRatingsInfo = document.createElement('div');
+        totalRatingsInfo.classList.add('rating-info', 'bottom-rating');
+        totalRatingsInfo.textContent = `▷ ${photo.totalRatings}`;
+  
+        // Append all elements
+        photoItem.appendChild(avgRatingInfo); // Top rating
+        photoItem.appendChild(img);
+        photoItem.appendChild(totalRatingsInfo); // Bottom rating
+        photoGrid.appendChild(photoItem);
+      });
     })
     .catch(error => console.error('Error fetching photos:', error));
   }
-  
-    function fetchPhotos() {
-      const token = localStorage.getItem('token'); 
-      
-      fetch('http://localhost:3000/profile', {
-        method: 'GET',
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        return response.json();
-      })
-      .then(data => {
-        const photoGrid = document.getElementById('photo-grid');
-        photoGrid.innerHTML = '';
-  
-        data.forEach(photo => {
-          const photoItem = document.createElement('div');
-          photoItem.classList.add('photo');
-          photoItem.dataset.country = photo.country;
-          photoItem.dataset.height = photo.height;
-          photoItem.dataset.build = photo.build;
-          photoItem.dataset.profession = photo.profession;
-  
-          // Image element
-          const img = document.createElement('img');
-          img.src = photo.photoUrl;
-          img.alt = "User photo";
-  
-          // Average Rating at the Top
-          const avgRatingInfo = document.createElement('div');
-          avgRatingInfo.classList.add('rating-info', 'top-rating');
-          avgRatingInfo.innerHTML = generateStars(photo.averageRating) + 
-          ` ${photo.averageRating}/10`;
-  
-          // Total Ratings at the Bottom
-          const totalRatingsInfo = document.createElement('div');
-          totalRatingsInfo.classList.add('rating-info', 'bottom-rating');
-          totalRatingsInfo.textContent = `▷ ${photo.totalRatings}`;
-  
-          // Append all elements
-          photoItem.appendChild(avgRatingInfo); // Top rating
-          photoItem.appendChild(img);
-          photoItem.appendChild(totalRatingsInfo); // Bottom rating
-          photoGrid.appendChild(photoItem);
-        });
-      })
-      .catch(error => console.error('Error fetching photos:', error));
-    }
   
     function generateStars(average) {
     const fullStars = Math.floor(average);
@@ -418,7 +382,7 @@
 
       let detailsHTML = '';
       if (country) detailsHTML += `<p>Country: ${countryMapping[country] || country}</p>`;
-      if (height) detailsHTML += `<p>Height: ${height} cm </p>`;
+      if (height) detailsHTML += `<p>Height: ${height} cm</p>`;
       if (build) detailsHTML += `<p>Build: ${build}</p>`;
       if (profession) detailsHTML += `<p>Profession: ${profession}</p>`;
 

@@ -55,6 +55,49 @@ db.query(createProfileTableQuery, (err, results) => {
   }
 });
 
+// Ensure photos table exists
+const createPhotosTableQuery = `
+  CREATE TABLE IF NOT EXISTS photos (
+    photo_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    country VARCHAR(255),
+    height INT,
+    build VARCHAR(255),
+    profession VARCHAR(255),
+    photo_url VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+  )
+`;
+
+db.query(createPhotosTableQuery, (err, results) => {
+  if (err) {
+    console.error("Error creating photos table:", err);
+  } else {
+    console.log("Photos table ensured.");
+  }
+});
+
+// Ensure rating table exists
+const createRatingTableQuery = `
+  CREATE TABLE IF NOT EXISTS rating (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    photo_id INT NOT NULL,
+    user_id INT NOT NULL,
+    rating INT NOT NULL,
+    FOREIGN KEY (photo_id) REFERENCES photos(photo_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+  )
+`;
+
+db.query(createRatingTableQuery, (err, results) => {
+  if (err) {
+    console.error("Error creating rating table:", err);
+  } else {
+    console.log("Rating table ensured.");
+  }
+});
+
 // Configure nodemailer
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -354,6 +397,55 @@ app.post('/upload-profile-picture', upload.single('image'), (req, res) => {
   });
 });
 
+// Route: Upload Photo
+app.post('/upload-photo', upload.single('photo'), (req, res) => {
+  const token = req.headers.authorization.split(' ')[1];
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (err) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+  const email = decoded.email;
+
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+
+  let { country, height, build, profession } = req.body;
+  const photoUrl = req.file.path;
+
+  // Get user_id from users table
+  const getUserQuery = "SELECT user_id FROM users WHERE email = ?";
+  db.query(getUserQuery, [email], (err, results) => {
+    if (err) {
+      console.error("Database error:", err);
+      return res.status(500).json({ error: "Database error" });
+    }
+
+    if (results.length === 0) {
+      return res.status(400).json({ error: "User not found" });
+    }
+
+    const userId = results[0].user_id;
+
+    // Insert photo details into photos table
+    const insertPhotoQuery = `
+      INSERT INTO photos (user_id, country, height, build, profession, photo_url)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `;
+    db.query(insertPhotoQuery, [userId, country, height, build, profession, photoUrl], (err, insertResults) => {
+      if (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Database error" });
+      }
+
+      const photoId = insertResults.insertId;
+      res.status(200).json({ message: "Photo uploaded successfully", photoId: photoId });
+    });
+  });
+});
+
 // Route: Get User Profile
 app.get('/user-profile', (req, res) => {
   const token = req.headers.authorization.split(' ')[1];
@@ -392,7 +484,16 @@ app.get('/profile', (req, res) => {
   }
   const email = decoded.email;
 
-  const query = "SELECT * FROM photos WHERE user_id = (SELECT user_id FROM users WHERE email = ?)";
+  const query = `
+    SELECT p.*, 
+           IFNULL(AVG(r.rating), 0) AS averageRating, 
+           COUNT(r.rating) AS totalRatings
+    FROM photos p
+    LEFT JOIN rating r ON p.photo_id = r.photo_id
+    WHERE p.user_id = (SELECT user_id FROM users WHERE email = ?)
+    GROUP BY p.photo_id
+  `;
+
   db.query(query, [email], (err, results) => {
     if (err) {
       console.error("Database error:", err);
@@ -400,6 +501,145 @@ app.get('/profile', (req, res) => {
     }
 
     res.status(200).json(results);
+  });
+});
+
+// Route: Login
+app.post('/login', (req, res) => {
+  const { identifier, password } = req.body;
+
+  if (!identifier || !password) {
+    return res.status(400).json({ error: 'Username/email and password are required' });
+  }
+
+  const query = 'SELECT * FROM users WHERE (username = ? OR email = ?) AND is_verified = 1';
+  db.query(query, [identifier, identifier], async (err, results) => {
+    if (err) {
+      console.error('Database error:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+
+    if (results.length === 0) {
+      return res.status(400).json({ error: 'Invalid credentials' });
+    }
+
+    const user = results[0];
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(400).json({ error: 'Invalid credentials' });
+    }
+
+    const token = jwt.sign({ email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    res.status(200).json({ token });
+  });
+});
+
+// Route: Get Random Photo
+app.get('/random-photo', (req, res) => {
+  const token = req.headers.authorization.split(' ')[1];
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (err) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+
+  const query = `
+    SELECT photo_id, photo_url, country, height, build, profession
+    FROM photos
+    ORDER BY RAND()
+    LIMIT 1
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Database error:", err);
+      return res.status(500).json({ error: "Database error" });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ error: "No photos found" });
+    }
+
+    const photo = results[0];
+    res.status(200).json({
+      photoId: photo.photo_id,
+      photoUrl: `http://localhost:3000/${photo.photo_url}`,
+      country: photo.country,
+      height: photo.height,
+      build: photo.build,
+      profession: photo.profession
+    });
+  });
+});
+
+// Route: Submit Rating
+app.post('/rate-photo', (req, res) => {
+  const token = req.headers.authorization.split(' ')[1];
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (err) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+
+  const { photoId, rating } = req.body;
+  const email = decoded.email;
+
+  if (!photoId || !rating) {
+    return res.status(400).json({ error: 'Photo ID and rating are required' });
+  }
+
+  // Get user_id from users table
+  const getUserQuery = "SELECT user_id FROM users WHERE email = ?";
+  db.query(getUserQuery, [email], (err, results) => {
+    if (err) {
+      console.error("Database error:", err);
+      return res.status(500).json({ error: "Database error" });
+    }
+
+    if (results.length === 0) {
+      return res.status(400).json({ error: "User not found" });
+    }
+
+    const userId = results[0].user_id;
+
+    const insertRatingQuery = `
+      INSERT INTO rating (photo_id, user_id, rating)
+      VALUES (?, ?, ?)
+    `;
+
+    db.query(insertRatingQuery, [photoId, userId, rating], (err, results) => {
+      if (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Database error" });
+      }
+
+      // Calculate average rating and total ratings
+      const calculateRatingQuery = `
+        SELECT AVG(rating) AS averageRating, COUNT(rating) AS totalRatings
+        FROM rating
+        WHERE photo_id = ?
+      `;
+
+      db.query(calculateRatingQuery, [photoId], (err, ratingResults) => {
+        if (err) {
+          console.error("Database error:", err);
+          return res.status(500).json({ error: "Database error" });
+        }
+
+        const averageRating = ratingResults[0].averageRating;
+        const totalRatings = ratingResults[0].totalRatings;
+
+        res.status(200).json({
+          message: "Rating submitted successfully",
+          yourRating: rating,
+          averageRating: averageRating,
+          totalRatings: totalRatings
+        });
+      });
+    });
   });
 });
 

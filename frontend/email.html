@@ -14,7 +14,7 @@
       align-items: center;
       justify-content: center;
       min-height: 100vh;
-      background: linear-gradient(to bottom, #ff9a9e, #fad0c4);
+      background: linear-gradient(to bottom, #000000, #2a5298);
     }
 
     .container {
@@ -127,13 +127,37 @@
         return;
       }
 
-      message.textContent = 'Email is valid';
-      message.className = 'message valid';
-      statusCheck.style.display = 'inline';
-      statusCheck.textContent = '✔';
-      statusCheck.style.color = '#4caf50';
-      nextButton.disabled = false;
-      nextButton.classList.add('active');
+      fetch(`http://localhost:3000/check-email?email=${email}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.message === 'Email is available') {
+            message.textContent = 'Email is valid';
+            message.className = 'message valid';
+            statusCheck.style.display = 'inline';
+            statusCheck.textContent = '✔';
+            statusCheck.style.color = '#4caf50';
+            nextButton.disabled = false;
+            nextButton.classList.add('active');
+          } else {
+            message.textContent = 'Email is already taken';
+            message.className = 'message';
+            statusCheck.style.display = 'inline';
+            statusCheck.textContent = '✖';
+            statusCheck.style.color = '#ff5252';
+            nextButton.disabled = true;
+            nextButton.classList.remove('active');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          message.textContent = 'Error checking email';
+          message.className = 'message';
+          statusCheck.style.display = 'inline';
+          statusCheck.textContent = '✖';
+          statusCheck.style.color = '#ff5252';
+          nextButton.disabled = true;
+          nextButton.classList.remove('active');
+        });
     });
 
     nextButton.addEventListener('click', () => {
