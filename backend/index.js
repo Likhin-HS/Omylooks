@@ -178,11 +178,13 @@ app.get("/check-email", (req, res) => {
 
 // Route: Register Username
 app.post("/register-username", (req, res) => {
-  const { username } = req.body;
+  let { username } = req.body;
 
   if (!username) {
     return res.status(400).json({ error: "Username is required" });
   }
+
+  username = username.toLowerCase(); // Convert username to lowercase
 
   // Save username with NULL values for email and password
   const query = "INSERT INTO users (username) VALUES (?) ON DUPLICATE KEY UPDATE username = VALUES(username)";
@@ -457,7 +459,7 @@ app.get('/user-profile', (req, res) => {
   }
   const email = decoded.email;
 
-  const query = "SELECT profile_picture FROM profile JOIN users ON profile.user_id = users.user_id WHERE users.email = ?";
+  const query = "SELECT profile_picture, username FROM profile JOIN users ON profile.user_id = users.user_id WHERE users.email = ?";
   db.query(query, [email], (err, results) => {
     if (err) {
       console.error("Database error:", err);
@@ -469,7 +471,8 @@ app.get('/user-profile', (req, res) => {
     }
 
     const profilePictureUrl = results[0].profile_picture ? `http://localhost:3000/${results[0].profile_picture}` : null;
-    res.status(200).json({ profilePictureUrl });
+    const username = results[0].username;
+    res.status(200).json({ profilePictureUrl, username });
   });
 });
 

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Photo</title>
+    <link href="https://unpkg.com/cropperjs/dist/cropper.css" rel="stylesheet">
+    <style>
+      body {
+        background: linear-gradient(to bottom, #000000, #2a5298);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+      }
+      .container {
+        text-align: center;
+        position: relative;
+        max-width: 400px;
+        width: 100%;
+        padding: 20px;
+        background: #abc4ff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        max-height: 95vh;
+        overflow-y: auto;
+      }
+      .skip-button {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: transparent;
+        border: none;
+        font-size: 20px;
+        color: #007BFF;
+        cursor: pointer;
+      }
+      .skip-button:hover {
+        text-decoration: underline;
+      }
+      .default-picture {
+        width: 200px;
+        height: 200px;
+        background-color: #ddd;
+        margin: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #999;
+        font-size: 14px;
+      }
+      .upload-button {
+        background-color: #007BFF;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        padding: 10px 20px;
+        text-align: center;
+        display: inline-block;
+      }
+      .upload-button:hover {
+        background-color: #0056b3;
+      }
+      .upload-input {
+        display: none;
+      }
+      .button-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 20px;
+      }
+      .preview-button {
+        display: inline-block; /* Change to inline-block to show by default */
+        background-color: #007bff;
+        padding: 10px 20px;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        margin-right: 10px; /* Add margin to the right to separate from the next button */
+      }
+      .preview-button:hover {
+        background-color: #0056b3;
+      }
+      .next-button {
+        display: inline-block; /* Change to inline-block to show by default */
+        background-color: #007bff; /* Change to blue */
+        padding: 10px 20px;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+      .next-button:hover {
+        background-color: #0056b3;
+      }
+      .cropper-container {
+        display: block; /* Change to block to show by default */
+        max-width: 100%;
+        max-height: 400px;
+        margin-top: 20px;
+      }
+      .button-group {
+        display: flex;
+        justify-content: center;
+        height: 35px;
+      }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="default-picture" id="photo-container">
+            <img id="uploaded-photo" src="images/Default Profile.png" alt="Uploaded Photo" style="width: 100%; height: 100%; max-width: 200px; max-height: 200px;">
+        </div>
+        <div class="button-container">
+            <div class="button-group">
+                <button class="preview-button" id="preview-button" onclick="previewCroppedImage()">Preview</button>
+                <button class="next-button" id="accept-button" onclick="acceptPhoto()">Accept</button>
+            </div>
+        </div>
+        <div class="cropper-container">
+            <img id="image" style="max-width: 100%; max-height: 400px;">
+        </div>
+    </div>
+    <script src="https://unpkg.com/cropperjs"></script>
+    <script>
+        let cropper;
+
+        function previewCroppedImage() {
+            if (cropper) {
+                const canvas = cropper.getCroppedCanvas();
+                const photoContainer = document.getElementById('photo-container');
+                photoContainer.style.backgroundImage = `url(${canvas.toDataURL()})`;
+                photoContainer.style.backgroundSize = 'cover';
+                photoContainer.style.backgroundPosition = 'center';
+                photoContainer.textContent = '';
+            }
+        }
+
+        async function acceptPhoto() {
+            if (cropper) {
+                const canvas = cropper.getCroppedCanvas();
+                const imageData = canvas.toDataURL('image/png');
+                localStorage.setItem('editedImage', imageData); // Save edited image to localStorage
+                window.location.href = 'photo-description.html'; // Redirect to photo-description.html
+            } else {
+                alert('Please upload and crop a photo before proceeding.');
+            }
+        }
+
+        // Load the uploaded image from localStorage if available
+        window.onload = function() {
+            const uploadedImage = localStorage.getItem('uploadedImage');
+            if (uploadedImage) {
+                const image = document.getElementById('image');
+                image.src = uploadedImage;
+                image.style.display = 'block';
+                image.style.maxHeight = '400px'; // Limit the height of the uploaded image
+
+                // Initialize Cropper.js
+                cropper = new Cropper(image, {
+                    aspectRatio: 1,
+                    viewMode: 1,
+                    autoCropArea: 1,
+                    crop(event) {
+                        // You can use event.detail to get the cropped area details
+                    }
+                });
+
+                // Show the preview and accept buttons
+                document.getElementById('preview-button').style.display = 'inline-block';
+                document.getElementById('accept-button').style.display = 'inline-block';
+            }
+        };
+    </script>
+</body>
+</html>

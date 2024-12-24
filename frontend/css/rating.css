@@ -190,21 +190,6 @@ main {
   color: #ff5c8d;
 }
 
-/* Media Queries for Responsiveness */
-@media screen and (max-width: 600px) {
-  .container {
-    padding: 15px;
-  }
-
-  #rating-input {
-    width: 80%; /* Slightly smaller slider on mobile */
-  }
-
-  #next-photo-btn {
-    width: 100%;
-  }
-}
-
 /* Feedback Modal Styles */
 #feedback-modal {
   position: fixed;

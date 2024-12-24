@@ -59,17 +59,21 @@ body {
 }
 
 .photo-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
   gap: 15px; /* Increase gap for better spacing */
 }
 
 .photo {
+  flex: 0 0 auto;
+  width: 200px;
+  height: 200px;
   position: relative;
   background-color: #ccc;
-  height: 200px;
   border-radius: 5px;
   overflow: hidden;
+  cursor: pointer;
 }
 
 .top-rating {
@@ -146,7 +150,7 @@ body {
   margin: auto;
   display: block;
   width: 80%;
-  max-width: 700px;
+  max-width: 500px;
 }
 
 #modal-caption {

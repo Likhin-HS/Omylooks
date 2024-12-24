@@ -32,16 +32,16 @@ cameraButton.addEventListener('click', () => {
 
   // Create camera preview section
   cameraSection.innerHTML = `
-    <div id="camera-section" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #f9f9f9; position: relative;">
+    <div id="camera-section" style="display: flex; flex-direction: column; align-items: center; justify-content: center; background: #abc4ff; border-radius: 10px; padding: 20px; position: relative;">
       <h3 style="margin-bottom: 20px;">Capture a Photo</h3>
       <div id="camera-container" style="display: flex; flex-direction: column; align-items: center;">
         <video id="camera-feed" autoplay style="max-width: 90%; max-height: 100vh; background: #000;"></video>
         <canvas id="captured-photo" style="display: none; max-width: 90%; max-height: 100vh; margin-top: 20px;"></canvas>
         <div style="margin-top: 20px;">
-          <button id="capture-photo">Capture Photo</button>
-          <button id="back-to-upload">Back</button>
-          <button id="retry-photo" style="display: none; margin-left: 10px;">Retry</button>
-          <button id="accept-photo" style="display: none; margin-left: 10px;">Accept Photo</button>
+          <button id="capture-photo" style="background: #4CAF50; color: white;">Capture Photo</button>
+          <button id="back-to-upload" style="background:rgb(116, 116, 116); color: white;">Back</button>
+          <button id="retry-photo" style="display: none; margin-left: 10px; background:rgb(210, 49, 49); color: white;">Retry</button>
+          <button id="accept-photo" style="display: none; margin-left: 10px; background: #4CAF50; color: white;">Accept Photo</button>
         </div>
       </div>
     </div>
@@ -66,14 +66,14 @@ cameraButton.addEventListener('click', () => {
 
   // Capture photo and scale it to fit the container
   captureButton.addEventListener('click', () => {
-    const previewWidth = 400; // Adjust this to your desired width
-    const previewHeight = 250; // Match the height of #photo-preview
+    const videoWidth = video.videoWidth;
+    const videoHeight = video.videoHeight;
 
-    canvas.width = previewWidth;
-    canvas.height = previewHeight;
+    canvas.width = videoWidth;
+    canvas.height = videoHeight;
 
     const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, previewWidth, previewHeight); // Scale the image to fit the preview
+    ctx.drawImage(video, 0, 0, videoWidth, videoHeight); // Capture the image at the video resolution
 
     // Hide video feed and show captured photo
     video.style.display = 'none';
@@ -105,7 +105,7 @@ cameraButton.addEventListener('click', () => {
     const imageData = canvas.toDataURL('image/png'); // Convert canvas to Base64
     localStorage.setItem('uploadedImage', imageData); // Save in localStorage
     stopCamera(video); // Stop the camera
-    window.location.href = 'photo-description.html'; // Redirect
+    window.location.href = 'edit-photo.html'; // Redirect
   });
 
   // Back to upload modal
@@ -122,15 +122,16 @@ galleryButton.addEventListener('click', () => {
 
   // Create gallery upload section
   gallerySection.innerHTML = `
-    <div id="gallery-section" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #f9f9f9;">
+    <div id="gallery-section" style="display: flex; flex-direction: column; align-items: center; justify-content: center; background: #abc4ff; border-radius: 10px; padding: 20px; position: relative;">
       <h3 style="margin-bottom: 20px;">Select an Image from Gallery</h3>
-      <input type="file" id="gallery-input" accept="image/*" style="margin-bottom: 20px;">
+      <label for="gallery-input" style="background: #4CAF50; color: white; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-bottom: 20px;">Choose File</label>
+      <input type="file" id="gallery-input" accept="image/*" style="display: none;">
       <div id="image-preview" style="max-width: 90%; overflow: hidden; text-align: center;">
         <p>No image selected</p>
       </div>
       <div style="margin-top: 20px">
-        <button id="submit-gallery" style="display: none; margin-top: 20px;">Submit Image</button>
-        <button id="back-to-upload-gallery" style="margin-top: 20px; margin-bottom: 40px;">Back</button>
+        <button id="submit-gallery" style="display: none; margin-top: 20px; background: #4CAF50; color: white;">Submit Image</button>
+        <button id="back-to-upload-gallery" style="margin-top: 20px; margin-bottom: 40px; background:rgb(116, 116, 116); color: white;">Back</button>
       </div>
     </div>
   `;
@@ -161,7 +162,7 @@ galleryButton.addEventListener('click', () => {
       const reader = new FileReader();
       reader.onload = function(event) {
         localStorage.setItem('uploadedImage', event.target.result); // Save Base64 in localStorage
-        window.location.href = 'photo-description.html'; // Redirect to description page
+        window.location.href = 'edit-photo.html'; // Redirect to description page
       };
       reader.readAsDataURL(file); // Read file as Base64
     } else {

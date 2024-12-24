@@ -252,22 +252,22 @@
   <script>
     // Back button functionality
     document.getElementById('back-button').addEventListener('click', () => {
-      alert("Going back to the Camera page...");
       window.history.back(); // Simulate navigation to the previous page
     });
   
     // Retrieve and display the uploaded image
     document.addEventListener('DOMContentLoaded', () => {
-      const imageData = localStorage.getItem('uploadedImage');
+      const imageData = localStorage.getItem('editedImage');
       if (imageData) {
         const photoPreview = document.getElementById('photo-preview');
         const imgElement = new Image();
         imgElement.src = imageData;
   
         imgElement.onload = () => {
-          imgElement.style.maxWidth = "100%";
-          imgElement.style.height = "auto";
-          imgElement.style.borderRadius = "10px";
+          imgElement.style.width = "100%";
+          imgElement.style.height = "100%";
+          imgElement.style.objectFit = "cover";
+          imgElement.style.borderRadius = "12px";
           photoPreview.innerHTML = "";
           photoPreview.appendChild(imgElement);
         };
@@ -300,7 +300,7 @@
     formData.append('photo_id', photoId);
     
     // Get the image data from localStorage
-    const imageData = localStorage.getItem('uploadedImage');
+    const imageData = localStorage.getItem('editedImage');
     if (imageData) {
       // Convert the base64 image data to a Blob
       const byteString = atob(imageData.split(',')[1]);
