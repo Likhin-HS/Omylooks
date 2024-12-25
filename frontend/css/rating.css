@@ -321,3 +321,28 @@ main {
 .photo-details.hidden {
   display: none;
 }
+
+/* User Profile Styles */
+.user-profile-container {
+  position: absolute;
+  bottom: 135px;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 50px;
+}
+
+.user-profile-picture {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+.user-profile-username {
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}

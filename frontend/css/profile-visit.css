@@ -36,27 +36,6 @@ body {
   border-radius: 50%;
 }
 
-.profile-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 15px; /* Increase gap for better spacing */
-  margin-bottom: 20px;
-}
-
-.profile-buttons button {
-  padding: 10px 20px; /* Adjust padding for better look */
-  border: none;
-  border-radius: 5px;
-  background-color: #007bff;
-  color: white;
-  cursor: pointer;
-  transition: background-color 0.3s; /* Add transition for hover effect */
-}
-
-.profile-buttons button:hover {
-  background-color: #0056b3; /* Darker shade on hover */
-}
-
 .photo-grid {
   display: flex;
   flex-wrap: nowrap;
@@ -132,7 +111,7 @@ body {
 }
 
 .modal {
-  display: none; 
+  display: none; /* Change from 'block' to 'none' */
   position: fixed; 
   z-index: 1000; 
   padding-top: 60px; 

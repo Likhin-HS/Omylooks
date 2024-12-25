@@ -8,6 +8,7 @@
 </head>
 <body>
   <div class="profile-container">
+    <button onclick="window.history.back()" style="position: absolute; top: 10px; left: 10px; background: none; color: rgb(255, 255, 255); border: none; padding: 10px; font-size: 30px; cursor: pointer;">&larr;</button>
     <!-- Username -->
     <div class="username">
       <h1 id="username">Username</h1>
@@ -16,11 +17,6 @@
     <div class="profile-picture">
       <img src="images/default profile.png" alt="Profile Picture" id="profile-picture">
     </div>
-    <!-- Buttons -->
-    <div class="profile-buttons">
-      <button onclick="window.location.href='create-profile.html'">Edit Profile</button>
-      <button>Shop</button>
-    </div>
     <!-- Horizontal Line -->
     <hr class="divider">
     <!-- Photo Grid -->
@@ -28,15 +24,6 @@
       <!-- Photos will be dynamically loaded here -->
     </div>
   </div>
-  <!-- Bottom Navigation -->
-  <div class="bottom-nav">
-    <!--<button onclick="window.location.href='../Search/search.html'">Search</button>-->
-    <button onclick="window.location.href='upload.html'">New Upload</button>
-    <button onclick="window.location.href='rating.html'">Home</button>
-    <!--<button onclick="window.location.href='../Leaderboard/leaderboard.html'">Leaderboard</button>-->
-    <button onclick="window.location.href='profile.html'">Profile</button>
-  </div>
-
   <!-- Modal Structure -->
   <div id="photo-modal" class="modal">
     <span class="close">&times;</span>
@@ -48,13 +35,47 @@
 
   <script>
     // Fetch the user's profile picture and photos when the page loads
-  window.onload = () => {
-    const token = localStorage.getItem('token');
-    
-    // Fetch user profile
-    fetch('http://localhost:3000/user-profile', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
+    window.onload = () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const userId = urlParams.get('userId');
+      const token = localStorage.getItem('token');
+      
+      if (!userId) {
+        alert("Error: No user ID provided.");
+        return;
+      }
+
+      // Fetch user profile
+      fetch(`http://localhost:3000/user-profile/${userId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json();
+        })
+        .then(data => {
+          if (data.profilePictureUrl) {
+            document.getElementById('profile-picture').src = data.profilePictureUrl;
+          }
+          if (data.username) {
+            document.getElementById('username').textContent = data.username;
+          }
+        })
+        .catch(error => console.error('Error fetching profile:', error));
+
+      // Fetch user photos
+      fetchPhotos(userId);
+    };
+
+    function fetchPhotos(userId) {
+      const token = localStorage.getItem('token'); 
+      
+      fetch(`http://localhost:3000/profile/${userId}`, {
+        method: 'GET',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
       .then(response => {
         if (!response.ok) {
           throw new Error('Network response was not ok');
@@ -62,69 +83,43 @@
         return response.json();
       })
       .then(data => {
-        if (data.profilePictureUrl) {
-          document.getElementById('profile-picture').src = data.profilePictureUrl;
-        }
-        if (data.username) {
-          document.getElementById('username').textContent = data.username;
-        }
-      })
-      .catch(error => console.error('Error fetching profile:', error));
-
-    // Fetch user photos
-    fetchPhotos();
-  };
-
-  function fetchPhotos() {
-    const token = localStorage.getItem('token'); 
+        const photoGrid = document.getElementById('photo-grid');
+        photoGrid.innerHTML = '';
     
-    fetch('http://localhost:3000/profile', {
-      method: 'GET',
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      return response.json();
-    })
-    .then(data => {
-      const photoGrid = document.getElementById('photo-grid');
-      photoGrid.innerHTML = '';
-  
-      data.reverse().forEach(photo => { // Reverse the order of photos
-        const photoItem = document.createElement('div');
-        photoItem.classList.add('photo');
-        photoItem.dataset.country = photo.country;
-        photoItem.dataset.height = photo.height;
-        photoItem.dataset.build = photo.build;
-        photoItem.dataset.profession = photo.profession;
-  
-        // Image element
-        const img = document.createElement('img');
-        img.src = `http://localhost:3000/${photo.photo_url}`;
-        img.alt = "User photo";
-  
-        // Average Rating at the Top
-        const avgRatingInfo = document.createElement('div');
-        avgRatingInfo.classList.add('rating-info', 'top-rating');
-        avgRatingInfo.innerHTML = generateStars(photo.averageRating) + 
-        ` ${photo.averageRating}/10`;
-  
-        // Total Ratings at the Bottom
-        const totalRatingsInfo = document.createElement('div');
-        totalRatingsInfo.classList.add('rating-info', 'bottom-rating');
-        totalRatingsInfo.textContent = `▷ ${photo.totalRatings}`;
-  
-        // Append all elements
-        photoItem.appendChild(avgRatingInfo); // Top rating
-        photoItem.appendChild(img);
-        photoItem.appendChild(totalRatingsInfo); // Bottom rating
-        photoGrid.appendChild(photoItem);
-      });
-    })
-    .catch(error => console.error('Error fetching photos:', error));
-  }
+        data.reverse().forEach(photo => { // Reverse the order of photos
+          const photoItem = document.createElement('div');
+          photoItem.classList.add('photo');
+          photoItem.dataset.userId = photo.user_id; // Add user ID to dataset
+          photoItem.dataset.country = photo.country;
+          photoItem.dataset.height = photo.height;
+          photoItem.dataset.build = photo.build;
+          photoItem.dataset.profession = photo.profession;
+    
+          // Image element
+          const img = document.createElement('img');
+          img.src = `http://localhost:3000/${photo.photo_url}`;
+          img.alt = "User photo";
+    
+          // Average Rating at the Top
+          const avgRatingInfo = document.createElement('div');
+          avgRatingInfo.classList.add('rating-info', 'top-rating');
+          avgRatingInfo.innerHTML = generateStars(photo.averageRating) + 
+          ` ${photo.averageRating}/10`;
+    
+          // Total Ratings at the Bottom
+          const totalRatingsInfo = document.createElement('div');
+          totalRatingsInfo.classList.add('rating-info', 'bottom-rating');
+          totalRatingsInfo.textContent = `▷ ${photo.totalRatings}`;
+    
+          // Append all elements
+          photoItem.appendChild(avgRatingInfo); // Top rating
+          photoItem.appendChild(img);
+          photoItem.appendChild(totalRatingsInfo); // Bottom rating
+          photoGrid.appendChild(photoItem);
+        });
+      })
+      .catch(error => console.error('Error fetching photos:', error));
+    }
   
     function generateStars(average) {
     const fullStars = Math.floor(average);
@@ -402,8 +397,8 @@
           </div>
         </div>
       `;
-      modal.style.display = 'block';
-    
+      modal.style.display = 'block'; // Ensure modal is displayed
+
       prevBtn.style.display = index === 0 ? 'none' : 'block';
       nextBtn.style.display = index === photos.length - 1 ? 'none' : 'block';
     }

@@ -35,7 +35,7 @@ cameraButton.addEventListener('click', () => {
     <div id="camera-section" style="display: flex; flex-direction: column; align-items: center; justify-content: center; background: #abc4ff; border-radius: 10px; padding: 20px; position: relative;">
       <h3 style="margin-bottom: 20px;">Capture a Photo</h3>
       <div id="camera-container" style="display: flex; flex-direction: column; align-items: center;">
-        <video id="camera-feed" autoplay style="max-width: 90%; max-height: 100vh; background: #000;"></video>
+        <video id="camera-feed" autoplay style="max-width: 90%; max-height: 100vh; background: #000; transform: scaleX(-1);"></video>
         <canvas id="captured-photo" style="display: none; max-width: 90%; max-height: 100vh; margin-top: 20px;"></canvas>
         <div style="margin-top: 20px;">
           <button id="capture-photo" style="background: #4CAF50; color: white;">Capture Photo</button>
@@ -73,7 +73,10 @@ cameraButton.addEventListener('click', () => {
     canvas.height = videoHeight;
 
     const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, videoWidth, videoHeight); // Capture the image at the video resolution
+    ctx.save(); // Save the current state
+    ctx.scale(-1, 1); // Flip horizontally
+    ctx.drawImage(video, -videoWidth, 0, videoWidth, videoHeight); // Capture the image at the video resolution
+    ctx.restore(); // Restore the original state
 
     // Hide video feed and show captured photo
     video.style.display = 'none';

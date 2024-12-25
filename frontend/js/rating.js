@@ -208,9 +208,18 @@ document.addEventListener("DOMContentLoaded", () => {
         const photoElement = document.getElementById("photo");
         photoElement.src = response.data.photoUrl;
         photoElement.alt = "Photo to rate";
+        photoElement.dataset.userId = response.data.userId; // Add user ID to dataset
+
+        // Display user profile picture and username
+        const userProfileContainer = document.getElementById("user-profile-container");
+        const userProfilePicture = document.getElementById("user-profile-picture");
+        const userProfileUsername = document.getElementById("user-profile-username");
+        userProfilePicture.src = response.data.profilePictureUrl;
+        userProfileUsername.textContent = response.data.username;
 
         // Store photoId and details for later use
         window.currentPhotoId = response.data.photoId;
+        window.currentUserId = response.data.userId; // Store user ID
         const { country, height, build, profession } = response.data;
         updatePhotoDetails(country, height, build, profession);
       })
@@ -342,3 +351,35 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initial photo load
   fetchRandomPhoto();
 });
+
+function fetchPhotos(userId) {
+  const token = localStorage.getItem('token'); 
+  
+  fetch(`http://localhost:3000/profile/${userId}`, {
+    method: 'GET',
+    headers: { 'Authorization': `Bearer ${token}` }
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return response.json();
+  })
+  .then(data => {
+    const photoGrid = document.getElementById('photo-grid');
+    photoGrid.innerHTML = '';
+
+    data.reverse().forEach(photo => {
+      const photoItem = document.createElement('div');
+      photoItem.classList.add('photo');
+      photoItem.dataset.userId = photo.userId; // Add user ID to dataset
+      photoItem.dataset.country = photo.country;
+      photoItem.dataset.height = photo.height;
+      photoItem.dataset.build = photo.build;
+      photoItem.dataset.profession = photo.profession;
+
+      // ...existing code...
+    });
+  })
+  .catch(error => console.error('Error fetching photos:', error));
+}

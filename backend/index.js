@@ -476,6 +476,27 @@ app.get('/user-profile', (req, res) => {
   });
 });
 
+// Route: Get User Profile by ID
+app.get('/user-profile/:userId', (req, res) => {
+  const userId = req.params.userId;
+
+  const query = "SELECT profile_picture, username FROM profile JOIN users ON profile.user_id = users.user_id WHERE users.user_id = ?";
+  db.query(query, [userId], (err, results) => {
+    if (err) {
+      console.error("Database error:", err);
+      return res.status(500).json({ error: "Database error" });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
+
+    const profilePictureUrl = results[0].profile_picture ? `http://localhost:3000/${results[0].profile_picture}` : null;
+    const username = results[0].username;
+    res.status(200).json({ profilePictureUrl, username });
+  });
+});
+
 // Route: Get User Photos
 app.get('/profile', (req, res) => {
   const token = req.headers.authorization.split(' ')[1];
@@ -498,6 +519,30 @@ app.get('/profile', (req, res) => {
   `;
 
   db.query(query, [email], (err, results) => {
+    if (err) {
+      console.error("Database error:", err);
+      return res.status(500).json({ error: "Database error" });
+    }
+
+    res.status(200).json(results);
+  });
+});
+
+// Route: Get User Photos by ID
+app.get('/profile/:userId', (req, res) => {
+  const userId = req.params.userId;
+
+  const query = `
+    SELECT p.*, 
+           IFNULL(AVG(r.rating), 0) AS averageRating, 
+           COUNT(r.rating) AS totalRatings
+    FROM photos p
+    LEFT JOIN rating r ON p.photo_id = r.photo_id
+    WHERE p.user_id = ?
+    GROUP BY p.photo_id
+  `;
+
+  db.query(query, [userId], (err, results) => {
     if (err) {
       console.error("Database error:", err);
       return res.status(500).json({ error: "Database error" });
@@ -549,8 +594,10 @@ app.get('/random-photo', (req, res) => {
   }
 
   const query = `
-    SELECT photo_id, photo_url, country, height, build, profession
-    FROM photos
+    SELECT p.photo_id, p.photo_url, p.country, p.height, p.build, p.profession, u.user_id, u.username, pr.profile_picture
+    FROM photos p
+    JOIN users u ON p.user_id = u.user_id
+    LEFT JOIN profile pr ON u.user_id = pr.user_id
     ORDER BY RAND()
     LIMIT 1
   `;
@@ -572,7 +619,10 @@ app.get('/random-photo', (req, res) => {
       country: photo.country,
       height: photo.height,
       build: photo.build,
-      profession: photo.profession
+      profession: photo.profession,
+      userId: photo.user_id, // Include user ID in the response
+      username: photo.username,
+      profilePictureUrl: photo.profile_picture ? `http://localhost:3000/${photo.profile_picture}` : null
     });
   });
 });

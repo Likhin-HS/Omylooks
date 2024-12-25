@@ -11,9 +11,9 @@
     <!-- Header -->
     <header>
       <div class="logo">Omylooks</div>
-      <div class="notification-icon">
+      <!--<div class="notification-icon">
         <button onclick="window.location.href='Notification/notification.html'">🔔</button>
-      </div>
+      </div>-->
     </header>
 
     <!-- Photo and Rating Section -->
@@ -29,7 +29,11 @@
           </div>
         </div>
         <div class="photo-wrapper">
-          <img id="photo" src="images/Omylooks Logo.png" alt="Photo to rate" class="photo">
+          <div id="user-profile-container" class="user-profile-container">
+            <img id="user-profile-picture" src="" alt="User Profile Picture" class="user-profile-picture">
+            <span id="user-profile-username" class="user-profile-username"></span>
+          </div>
+          <img id="photo" src="images/Omylooks Logo.png" alt="Photo to rate" class="photo" data-user-id="">
         </div>
         <div class="rating">
           <!-- Box above the slider to display the rating value -->
@@ -44,10 +48,10 @@
 
   <!-- Bottom Navigation -->
   <div class="bottom-nav">
-    <button onclick="window.location.href='../Nav buttons/Search/search.html'">Search</button>
+   <!--<button onclick="window.location.href='../Nav buttons/Search/search.html'">Search</button>--> 
     <button onclick="window.location.href='upload.html'">New Upload</button>
     <button>Home</button>
-    <button onclick="window.location.href='../Nav buttons/Leaderboard/leaderboard.html'">Leaderboard</button>
+    <!--<button onclick="window.location.href='../Nav buttons/Leaderboard/leaderboard.html'">Leaderboard</button>--> 
     <button onclick="window.location.href='profile.html'">Profile</button>
   </div>
 
@@ -55,7 +59,24 @@
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script src="js/rating.js"></script>
   <script>
+    function fetchRandomPhoto() {
+      // This function is defined in js/rating.js
+    }
+
     document.getElementById('next-photo-btn').addEventListener('click', fetchRandomPhoto);
+
+    // Add event listeners for profile picture and username
+    document.getElementById('user-profile-picture').addEventListener('click', redirectToProfile);
+    document.getElementById('user-profile-username').addEventListener('click', redirectToProfile);
+
+    function redirectToProfile() {
+      const userId = document.getElementById("photo").dataset.userId;
+      if (userId) {
+        window.location.href = `profile-visit.html?userId=${userId}`;
+      } else {
+        alert("Error: No user information available.");
+      }
+    }
   </script>
 </body>
 </html>
