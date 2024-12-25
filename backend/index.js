@@ -696,6 +696,43 @@ app.post('/rate-photo', (req, res) => {
   });
 });
 
+// Route: Delete Photo
+app.delete('/photos/:photoId', (req, res) => {
+  const token = req.headers.authorization.split(' ')[1];
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (err) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+
+  const photoId = req.params.photoId;
+
+  if (!photoId) {
+    return res.status(400).json({ error: 'Photo ID is required' });
+  }
+
+  // Delete ratings associated with the photo
+  const deleteRatingsQuery = "DELETE FROM rating WHERE photo_id = ?";
+  db.query(deleteRatingsQuery, [photoId], (err, results) => {
+    if (err) {
+      console.error("Database error:", err);
+      return res.status(500).json({ error: "Database error" });
+    }
+
+    // Delete the photo
+    const deletePhotoQuery = "DELETE FROM photos WHERE photo_id = ?";
+    db.query(deletePhotoQuery, [photoId], (err, results) => {
+      if (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Database error" });
+      }
+
+      res.status(200).json({ message: "Photo and associated ratings deleted successfully" });
+    });
+  });
+});
+
 // Create HTTP server
 const server = http.createServer(app);
 

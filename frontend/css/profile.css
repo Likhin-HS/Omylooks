@@ -241,3 +241,20 @@ body {
   background: #ffffff;
   margin: 20px 0;
 }
+
+.delete-btn {
+  display: block;
+  margin: 20px auto 0;
+  padding: 10px 20px;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s ease;
+}
+
+.delete-btn:hover {
+  background-color: #e53935;
+  transform: translateY(-2px); /* Subtle hover animation */
+}

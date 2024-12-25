@@ -149,6 +149,7 @@ main {
 }
 
 #next-photo-btn {
+  font-weight: bold;
   margin-top: 14px;
   padding: 10px 20px;
   background-color: #4CAF50;
@@ -161,6 +162,25 @@ main {
 
 #next-photo-btn:hover {
   background-color: #45a049;
+  transform: translateY(-2px); /* Subtle hover animation */
+}
+
+#pass-photo-btn {
+  position: absolute;
+  font-weight: bold;
+  left: 20px;
+  margin-top: 14px;
+  padding: 10px 20px;
+  background-color: #7829ff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background-color 0.3s, transform 0.2s ease;
+}
+
+#pass-photo-btn:hover {
+  background-color: #632cc4;
   transform: translateY(-2px); /* Subtle hover animation */
 }
 

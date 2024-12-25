@@ -44,6 +44,7 @@
     <img class="modal-content" id="modal-img">
     <span class="next">&gt;</span>
     <div id="modal-caption"></div>
+    <button id="delete-photo-btn" class="delete-btn">Delete Photo</button>
   </div>
 
   <script>
@@ -95,6 +96,7 @@
       data.reverse().forEach(photo => { // Reverse the order of photos
         const photoItem = document.createElement('div');
         photoItem.classList.add('photo');
+        photoItem.dataset.photoId = photo.photo_id; // Set the photo ID
         photoItem.dataset.country = photo.country;
         photoItem.dataset.height = photo.height;
         photoItem.dataset.build = photo.build;
@@ -153,6 +155,7 @@
     const closeModal = document.getElementsByClassName('close')[0];
     const prevBtn = document.getElementsByClassName('prev')[0];
     const nextBtn = document.getElementsByClassName('next')[0];
+    const deletePhotoBtn = document.getElementById('delete-photo-btn');
     let currentPhotoIndex = 0;
     let photos = [];
 
@@ -179,6 +182,31 @@
       if (currentPhotoIndex < photos.length - 1) {
         currentPhotoIndex++;
         showModal(currentPhotoIndex);
+      }
+    };
+
+    deletePhotoBtn.onclick = function() {
+      const photo = photos[currentPhotoIndex];
+      const photoId = photo.dataset.photoId;
+
+      if (confirm('Are you sure you want to delete this photo?')) {
+        const token = localStorage.getItem('token');
+        fetch(`http://localhost:3000/photos/${photoId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json();
+        })
+        .then(data => {
+          alert('Photo deleted successfully');
+          modal.style.display = 'none';
+          fetchPhotos(); // Refresh the photo grid
+        })
+        .catch(error => console.error('Error deleting photo:', error));
       }
     };
 
@@ -406,6 +434,7 @@
     
       prevBtn.style.display = index === 0 ? 'none' : 'block';
       nextBtn.style.display = index === photos.length - 1 ? 'none' : 'block';
+      deletePhotoBtn.style.display = 'block';
     }
   });
   </script>
