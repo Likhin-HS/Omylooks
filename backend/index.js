@@ -1,3 +1,19 @@
+
+/*
+Copyright 2024 Likhin H S
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 const express = require("express");
 const mysql = require("mysql2");
 const bodyParser = require("body-parser");
@@ -123,6 +139,14 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
+// Include reportProblem route
+const reportProblemRoute = require('./routes/reportProblem');
+app.use('/api', reportProblemRoute);
+
+// Include helpImprove route
+const helpImproveRoute = require('./routes/helpImprove');
+app.use('/api', helpImproveRoute);
+
 // Route: Check Username
 app.get("/check-username", (req, res) => {
   const username = req.query.username;
@@ -162,15 +186,15 @@ app.get("/check-email", (req, res) => {
     }
 
     if (results.length > 0) {
-      if (results[0].is_verified === 0) {
-        // Email is available if not verified
-        return res.status(200).json({ message: "Email is available" });
-      } else {
-        // Email already exists and is verified
+      if (results[0].is_verified === 1) {
+        // Email is registered and verified
         return res.status(409).json({ error: "Email is already taken" });
+      } else {
+        // Email exists but is not verified
+        return res.status(200).json({ message: "Email is available" });
       }
     } else {
-      // Email is available
+      // Email is not registered
       return res.status(200).json({ message: "Email is available" });
     }
   });
@@ -395,6 +419,44 @@ app.post('/upload-profile-picture', upload.single('image'), (req, res) => {
           res.status(200).json({ message: "Profile picture uploaded successfully" });
         });
       }
+    });
+  });
+});
+
+// Route: Remove Profile Picture
+app.delete('/remove-profile-picture', (req, res) => {
+  const token = req.headers.authorization.split(' ')[1];
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (err) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+  const email = decoded.email;
+
+  // Get user_id from users table
+  const getUserQuery = "SELECT user_id FROM users WHERE email = ?";
+  db.query(getUserQuery, [email], (err, results) => {
+    if (err) {
+      console.error("Database error:", err);
+      return res.status(500).json({ error: "Database error" });
+    }
+
+    if (results.length === 0) {
+      return res.status(400).json({ error: "User not found" });
+    }
+
+    const userId = results[0].user_id;
+
+    // Remove profile picture from profile table
+    const removeProfilePictureQuery = "UPDATE profile SET profile_picture = NULL WHERE user_id = ?";
+    db.query(removeProfilePictureQuery, [userId], (err, updateResults) => {
+      if (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Database error" });
+      }
+
+      res.status(200).json({ message: "Profile picture removed successfully" });
     });
   });
 });
@@ -729,6 +791,127 @@ app.delete('/photos/:photoId', (req, res) => {
       }
 
       res.status(200).json({ message: "Photo and associated ratings deleted successfully" });
+    });
+  });
+});
+
+// Route: Reset Password
+app.post("/reset-password", async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: "Email and password are required" });
+  }
+
+  try {
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Update the password for the given email
+    const query = "UPDATE users SET password = ? WHERE email = ?";
+    db.query(query, [hashedPassword, email], (err, results) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: "Database error" });
+      }
+
+      // Generate JWT token
+      const token = jwt.sign({ email: email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+      res.status(200).json({ message: "Password reset successfully", token: token });
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error hashing password" });
+  }
+});
+
+// Route: Change Username
+app.post("/change-username", (req, res) => {
+  const token = req.headers.authorization.split(' ')[1];
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (err) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+  const email = decoded.email;
+  const { newUsername } = req.body;
+
+  if (!newUsername) {
+    return res.status(400).json({ error: "New username is required" });
+  }
+
+  const query = "UPDATE users SET username = ? WHERE email = ?";
+  db.query(query, [newUsername, email], (err, results) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: "Database error" });
+    }
+
+    res.status(200).json({ message: "Username changed successfully" });
+  });
+});
+
+// Route: Delete Account
+app.delete('/delete-account', (req, res) => {
+  const token = req.headers.authorization.split(' ')[1];
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (err) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+  const email = decoded.email;
+
+  // Get user_id from users table
+  const getUserQuery = "SELECT user_id FROM users WHERE email = ?";
+  db.query(getUserQuery, [email], (err, results) => {
+    if (err) {
+      console.error("Database error:", err);
+      return res.status(500).json({ error: "Database error" });
+    }
+
+    if (results.length === 0) {
+      return res.status(400).json({ error: "User not found" });
+    }
+
+    const userId = results[0].user_id;
+
+    // Delete all related data from all tables
+    const deleteProfileQuery = "DELETE FROM profile WHERE user_id = ?";
+    const deletePhotosQuery = "DELETE FROM photos WHERE user_id = ?";
+    const deleteRatingsQuery = "DELETE FROM rating WHERE user_id = ?";
+    const deleteUserQuery = "DELETE FROM users WHERE user_id = ?";
+
+    db.query(deleteProfileQuery, [userId], (err, profileResults) => {
+      if (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Database error" });
+      }
+
+      db.query(deletePhotosQuery, [userId], (err, photosResults) => {
+        if (err) {
+          console.error("Database error:", err);
+          return res.status(500).json({ error: "Database error" });
+        }
+
+        db.query(deleteRatingsQuery, [userId], (err, ratingsResults) => {
+          if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Database error" });
+          }
+
+          db.query(deleteUserQuery, [userId], (err, userResults) => {
+            if (err) {
+              console.error("Database error:", err);
+              return res.status(500).json({ error: "Database error" });
+            }
+
+            res.status(200).json({ message: "Account deleted successfully" });
+          });
+        });
+      });
     });
   });
 });

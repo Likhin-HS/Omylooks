@@ -19,7 +19,7 @@ limitations under the License.
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Verification Pending</title>
+  <title>Verify OTP</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -73,60 +73,58 @@ limitations under the License.
       color: #4caf50;
     }
 
-    .message.success {
-      color: #4caf50;
-    }
-
     button {
       padding: 10px 20px;
       font-size: 1rem;
       border: none;
       border-radius: 5px;
-      background: #4caf50;
+      background: #ccc;
       color: #fff;
-      cursor: pointer;
+      cursor: not-allowed;
       transition: background 0.3s ease;
     }
 
-    .back-button {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      padding: 10px 20px;
-      font-size: 30px;
-      border: none;
-      border-radius: 5px;
-      background: transparent;
-      color: #fff;
+    button.active {
+      background: #4caf50;
       cursor: pointer;
-      transition: font-size 0.3s ease;
-    }
-
-    .back-button:hover {
-      font-size: 33px;
     }
   </style>
 </head>
 <body>
-  <button class="back-button" onclick="window.history.back()">&#8592;</button>
   <div class="container">
-    <h2>Enter OTP</h2>
-    <p>Check your email for the OTP.</p>
+    <h2>Verify OTP</h2>
     <div class="input-group">
-      <input type="text" id="otp" maxlength="6" placeholder="Enter OTP" required>
+      <input type="text" id="otp" placeholder="Enter OTP" maxlength="6">
     </div>
-    <button id="verify-btn">Verify OTP</button>
+    <p class="message" id="message">Enter the OTP sent to your email.</p>
+    <button id="verify-button" disabled>Verify</button>
   </div>
 
   <script>
-    document.getElementById('verify-btn').addEventListener('click', () => {
-      const otp = document.getElementById('otp').value;
-      const email = localStorage.getItem('email'); // Retrieve email from localStorage
+    const otpInput = document.getElementById('otp');
+    const message = document.getElementById('message');
+    const verifyButton = document.getElementById('verify-button');
 
-      if (!otp) {
-        alert('Please enter OTP.');
+    otpInput.addEventListener('input', () => {
+      const otp = otpInput.value.trim();
+
+      if (otp.length !== 6 || isNaN(otp)) {
+        message.textContent = 'OTP must be a 6-digit number.';
+        message.className = 'message';
+        verifyButton.disabled = true;
+        verifyButton.classList.remove('active');
         return;
       }
+
+      message.textContent = 'OTP is valid.';
+      message.className = 'message valid';
+      verifyButton.disabled = false;
+      verifyButton.classList.add('active');
+    });
+
+    verifyButton.addEventListener('click', () => {
+      const otp = otpInput.value.trim();
+      const email = localStorage.getItem('resetEmail'); // Retrieve email from localStorage
 
       if (!email) {
         alert('Email is missing. Please go back and enter your email.');
@@ -135,28 +133,21 @@ limitations under the License.
 
       fetch('http://localhost:3000/verify-otp', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: email, // Include email in the request body
-          otp: otp, // OTP entered by the user
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp })
       })
       .then(response => response.json())
       .then(data => {
-        console.log(data); // Log the response data to the console
-        if (data && data.message === 'Email verified successfully' && data.token) {
-          localStorage.setItem('token', data.token); // Store the token in localStorage
-          alert('Verification Successful!');
-          window.location.href = 'create-profile.html'; // Redirect to profile creation page
+        if (data.message === 'Email verified successfully') {
+          alert('OTP verified successfully!');
+          window.location.href = 'password-reset.html'; // Redirect to reset password page
         } else {
-          alert(data.message || 'Incorrect OTP. Please try again.');
+          alert(data.message || 'Error verifying OTP.');
         }
       })
       .catch(error => {
-        console.error('Error verifying OTP:', error);
-        alert('An error occurred!');
+        console.error('Error:', error);
+        alert('Failed to verify OTP.');
       });
     });
   </script>

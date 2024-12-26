@@ -19,7 +19,7 @@ limitations under the License.
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Enter Username</title>
+  <title>Change Username</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -39,6 +39,7 @@ limitations under the License.
       border-radius: 10px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
       text-align: center;
+      position: relative;
     }
 
     .container h2 {
@@ -100,7 +101,7 @@ limitations under the License.
       position: relative;
     }
 
-    #username {
+    #new-username {
       padding-right: 30px; /* Add padding to make space for the check mark */
     }
 
@@ -135,20 +136,20 @@ limitations under the License.
 <body>
   <button class="back-button" onclick="window.history.back()">&#8592;</button>
   <div class="container">
-    <h2>Choose Your Username</h2>
+    <h2>Change Your Username</h2>
     <div class="input-group">
-      <input type="text" id="username" placeholder="Enter username" maxlength="50">
+      <input type="text" id="new-username" placeholder="Enter new username" maxlength="50">
       <span id="status-check">✔</span>
     </div>
-    <p class="message" id="message">Enter a username to check availability</p>
-    <button id="next-button" disabled>Next</button>
+    <p class="message" id="message">Enter a new username to check availability</p>
+    <button id="change-button" disabled>Change</button>
   </div>
 
   <script>
-    const usernameInput = document.getElementById('username');
+    const usernameInput = document.getElementById('new-username');
     const statusCheck = document.getElementById('status-check');
     const message = document.getElementById('message');
-    const nextButton = document.getElementById('next-button');
+    const changeButton = document.getElementById('change-button');
 
     usernameInput.addEventListener('input', () => {
       const username = usernameInput.value.trim();
@@ -160,16 +161,16 @@ limitations under the License.
         statusCheck.style.display = 'inline';
         statusCheck.textContent = '✖';
         statusCheck.style.color = '#ff5252';
-        nextButton.disabled = true;
-        nextButton.classList.remove('active');
+        changeButton.disabled = true;
+        changeButton.classList.remove('active');
         return;
       } else if (username === '') {
         // Reset UI
         statusCheck.style.display = 'none';
-        message.textContent = 'Enter a username to check availability';
+        message.textContent = 'Enter a new username to check availability';
         message.className = 'message';
-        nextButton.disabled = true;
-        nextButton.classList.remove('active');
+        changeButton.disabled = true;
+        changeButton.classList.remove('active');
         return;
       } else if (/[A-Z]/.test(username)) {
         // Contains uppercase letters
@@ -178,8 +179,8 @@ limitations under the License.
         statusCheck.style.color = '#ff5252';
         message.textContent = 'Username must be in lowercase only';
         message.className = 'message';
-        nextButton.disabled = true;
-        nextButton.classList.remove('active');
+        changeButton.disabled = true;
+        changeButton.classList.remove('active');
         return;
       } else if (!validUsername.test(username) || !/[a-z]/.test(username)) {
         // Invalid characters or no letters
@@ -188,8 +189,8 @@ limitations under the License.
         statusCheck.style.color = '#ff5252';
         message.textContent = 'Username must contain at least one letter and only lowercase letters, numbers, underscores, and periods are allowed';
         message.className = 'message';
-        nextButton.disabled = true;
-        nextButton.classList.remove('active');
+        changeButton.disabled = true;
+        changeButton.classList.remove('active');
         return;
       }
 
@@ -209,8 +210,8 @@ limitations under the License.
           statusCheck.style.color = '#4caf50';
           message.textContent = 'Username is available';
           message.className = 'message available';
-          nextButton.disabled = false;
-          nextButton.classList.add('active');
+          changeButton.disabled = false;
+          changeButton.classList.add('active');
         })
         .catch((error) => {
           // Username is already taken
@@ -219,35 +220,36 @@ limitations under the License.
           statusCheck.style.color = '#ff5252';
           message.textContent = 'Username is already taken';
           message.className = 'message';
-          nextButton.disabled = true;
-          nextButton.classList.remove('active');
+          changeButton.disabled = true;
+          changeButton.classList.remove('active');
         });
     });
 
-    // Trigger "Next" button click on Enter key press
+    // Trigger "Change" button click on Enter key press
     usernameInput.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter' && !nextButton.disabled) {
-        nextButton.click();
+      if (event.key === 'Enter' && !changeButton.disabled) {
+        changeButton.click();
       }
     });
 
-    // Navigate to password.html on "Next" button click
-    nextButton.addEventListener('click', () => {
-      let username = usernameInput.value.trim().toLowerCase(); // Convert username to lowercase
-      localStorage.setItem('username', username); // Store username in localStorage
+    // Change username on "Change" button click
+    changeButton.addEventListener('click', () => {
+      const newUsername = usernameInput.value.trim().toLowerCase(); // Convert username to lowercase
+      const token = localStorage.getItem('token'); // Retrieve token from localStorage
 
-      fetch('http://localhost:3000/register-username', {
+      fetch('http://localhost:3000/change-username', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ username })
+        body: JSON.stringify({ newUsername })
       })
       .then(response => {
         if (response.ok) {
-          window.location.href = 'password.html';
+          window.location.href = 'profile.html'; // Redirect to profile page
         } else {
-          throw new Error('Failed to register username');
+          throw new Error('Failed to change username');
         }
       })
       .catch(error => {

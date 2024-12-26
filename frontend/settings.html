@@ -1,0 +1,124 @@
+
+/*
+Copyright 2024 Likhin H S
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings</title>
+  <link rel="stylesheet" href="css/settings.css">
+</head>
+<body>
+  
+  <div class="settings-container">
+    <div class="settings-header">
+      <button class="back-button" onclick="window.location.href='profile.html'">&#8592;</button>
+      <h1>Settings</h1>
+    </div>
+    
+    <!-- Profile Settings -->
+    <div class="settings-section">
+      <h2>Profile Settings</h2>
+      <button onclick="confirmRemoveProfilePicture()">Remove Profile Picture</button>
+      <button onclick="window.location.href='change-username.html'">Change Username</button>
+      <button onclick="window.location.href='change-password.html'">Change Password</button>
+    </div>
+    <!-- Help -->
+    <div class="settings-section">
+      <h2>Help</h2>
+      <button onclick="window.location.href='report-problem.html'">Report a Problem</button>
+      <button onclick="window.location.href='help-improve.html'">Help Us Imporve</button>
+    </div>
+    <!-- About -->
+    <div class="settings-section">
+      <h2>About</h2>
+      <button onclick="window.location.href='terms-of-service.html'">Terms of Service</button>
+      <button onclick="window.location.href='privacy-policy.html'">Privacy Policy</button>
+      <button onclick="window.location.href='license.html'">Licensing</button>
+    </div>
+    <!-- Account Settings -->
+    <div class="settings-section">
+      <h2>Account Settings</h2>
+      <button id="logout-button" style="background: red;" onmouseover="this.style.background='darkred'" onmouseout="this.style.background='red'">Logout</button>
+      <button id="delete-account-button" style="background: rgb(186, 21, 21);" onmouseover="this.style.background='darkred'" onmouseout="this.style.background='rgb(186, 21, 21)'">Delete Account</button>
+    </div>
+  </div>
+
+  <div id="delete-account-modal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <p>Please type <strong>DELETE</strong> to confirm account deletion:</p>
+      <input type="text" id="delete-confirmation-input" placeholder="Type DELETE to confirm">
+      <button id="confirm-delete-button">Confirm Delete</button>
+    </div>
+  </div>
+
+  <script src="js/settings.js"></script>
+  <script>
+    document.getElementById('logout-button').addEventListener('click', function() {
+      if (confirm('Are you sure you want to logout?')) {
+        localStorage.removeItem('token');
+        window.location.href = 'index.html';
+      }
+    });
+
+    document.getElementById('delete-account-button').addEventListener('click', function() {
+      if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+        openModal();
+      }
+    });
+
+    document.getElementById('confirm-delete-button').addEventListener('click', function() {
+      const confirmationInput = document.getElementById('delete-confirmation-input').value;
+      if (confirmationInput === 'DELETE') {
+        const token = localStorage.getItem('token');
+        fetch('http://localhost:3000/delete-account', {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.message) {
+            alert(data.message);
+            localStorage.removeItem('token');
+            window.location.href = 'index.html';
+          } else {
+            alert('Failed to delete account');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('An error occurred while deleting the account');
+        });
+      } else {
+        alert('You must type DELETE to confirm');
+      }
+    });
+
+    function openModal() {
+      document.getElementById('delete-account-modal').style.display = 'block';
+    }
+
+    function closeModal() {
+      document.getElementById('delete-account-modal').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
