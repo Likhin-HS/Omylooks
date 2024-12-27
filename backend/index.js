@@ -484,51 +484,58 @@ app.delete('/remove-profile-picture', (req, res) => {
 });
 
 // Route: Upload Photo
-app.post('/upload-photo', upload.single('photo'), (req, res) => {
-  console.log("Route /upload-photo hit");
-  const token = req.headers.authorization.split(' ')[1];
-  let decoded;
-  try {
-    decoded = jwt.verify(token, process.env.JWT_SECRET);
-  } catch (err) {
-    return res.status(401).json({ error: 'Invalid token' });
-  }
-  const email = decoded.email;
-
-  if (!req.file) {
-    return res.status(400).json({ error: 'No file uploaded' });
-  }
-
-  let { country, height, build, profession } = req.body;
-  const photoUrl = req.file.path;
-
-  // Get user_id from users table
-  const getUserQuery = "SELECT user_id FROM users WHERE email = ?";
-  db.query(getUserQuery, [email], (err, results) => {
+app.post('/upload-photo', (req, res) => {
+  upload.single('photo')(req, res, (err) => {
     if (err) {
-      console.error("Database error:", err);
-      return res.status(500).json({ error: "Database error" });
+      console.error("File upload error:", err);
+      return res.status(500).json({ error: "File upload error" });
     }
 
-    if (results.length === 0) {
-      return res.status(400).json({ error: "User not found" });
+    console.log("Route /upload-photo hit");
+    const token = req.headers.authorization.split(' ')[1];
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+    const email = decoded.email;
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    const userId = results[0].user_id;
+    let { country, height, build, profession } = req.body;
+    const photoUrl = req.file.path;
 
-    // Insert photo details into photos table
-    const insertPhotoQuery = `
-      INSERT INTO photos (user_id, country, height, build, profession, photo_url)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `;
-    db.query(insertPhotoQuery, [userId, country, height, build, profession, photoUrl], (err, insertResults) => {
+    // Get user_id from users table
+    const getUserQuery = "SELECT user_id FROM users WHERE email = ?";
+    db.query(getUserQuery, [email], (err, results) => {
       if (err) {
         console.error("Database error:", err);
         return res.status(500).json({ error: "Database error" });
       }
 
-      const photoId = insertResults.insertId;
-      res.status(200).json({ message: "Photo uploaded successfully", photoId: photoId });
+      if (results.length === 0) {
+        return res.status(400).json({ error: "User not found" });
+      }
+
+      const userId = results[0].user_id;
+
+      // Insert photo details into photos table
+      const insertPhotoQuery = `
+        INSERT INTO photos (user_id, country, height, build, profession, photo_url)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `;
+      db.query(insertPhotoQuery, [userId, country, height, build, profession, photoUrl], (err, insertResults) => {
+        if (err) {
+          console.error("Database error:", err);
+          return res.status(500).json({ error: "Database error" });
+        }
+
+        const photoId = insertResults.insertId;
+        res.status(200).json({ message: "Photo uploaded successfully", photoId: photoId });
+      });
     });
   });
 });
