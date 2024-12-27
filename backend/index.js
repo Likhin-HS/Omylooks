@@ -582,6 +582,7 @@ app.get('/user-profile', (req, res) => {
   try {
     decoded = jwt.verify(token, process.env.JWT_SECRET);
   } catch (err) {
+    console.error('JWT verification error:', err);
     return res.status(401).json({ error: 'Invalid token' });
   }
   const email = decoded.email;
