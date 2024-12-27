@@ -239,7 +239,7 @@ limitations under the License.
               window.location.href = 'profile.html'; // Redirect to profile.html
             } else {
               const errorData = await response.json();
-              console.error('Failed to upload profile picture:', errorData.error);
+              console.error('Failed to upload profile picture:', JSON.stringify(errorData));
               alert(`Failed to upload profile picture: ${errorData.error}`);
             }
           } catch (error) {
