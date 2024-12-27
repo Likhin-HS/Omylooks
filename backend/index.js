@@ -24,8 +24,7 @@ const multer = require('multer'); // Add multer for file uploads
 const fs = require('fs'); // Add fs for file system operations
 const http = require('http'); // Add http for WebSocket server
 const WebSocket = require('ws'); // Add WebSocket library
-const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const axios = require('axios'); // Add axios for HTTP requests
 require('dotenv').config();
 
 const app = express();
@@ -144,22 +143,11 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
 
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
+// Add ImgBB API key
+const IMGBB_API_KEY = process.env.IMGBB_API_KEY;
 
-// Configure multer-storage-cloudinary
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: 'uploads',
-    format: async (req, file) => 'png', // supports promises as well
-    public_id: (req, file) => `${Date.now()}-${file.originalname}`
-  }
-});
+// Configure multer for file uploads
+const storage = multer.memoryStorage(); // Use memory storage for multer
 const upload = multer({ storage: storage });
 
 // Include reportProblem route
@@ -393,7 +381,7 @@ app.post("/verify-otp", (req, res) => {
 });
 
 // Route: Upload Profile Picture
-app.post('/upload-profile-picture', upload.single('image'), (req, res) => {
+app.post('/upload-profile-picture', upload.single('image'), async (req, res) => {
   console.log("Route /upload-profile-picture hit");
   const token = req.headers.authorization.split(' ')[1];
   let decoded;
@@ -410,57 +398,71 @@ app.post('/upload-profile-picture', upload.single('image'), (req, res) => {
     return res.status(400).json({ error: 'No file uploaded' });
   }
 
-  const profilePictureUrl = req.file.path;
-  console.log('Uploaded file path:', profilePictureUrl);
+  try {
+    // Upload image to ImgBB
+    const formData = new FormData();
+    formData.append('image', req.file.buffer.toString('base64'));
+    formData.append('key', IMGBB_API_KEY);
 
-  // Get user_id from users table
-  const getUserQuery = "SELECT user_id FROM users WHERE email = ?";
-  db.query(getUserQuery, [email], (err, results) => {
-    if (err) {
-      console.error("Database error:", err);
-      return res.status(500).json({ error: "Database error" });
-    }
+    const response = await axios.post('https://api.imgbb.com/1/upload', formData, {
+      headers: formData.getHeaders()
+    });
 
-    if (results.length === 0) {
-      console.error("User not found");
-      return res.status(400).json({ error: "User not found" });
-    }
+    const profilePictureUrl = response.data.data.url;
+    console.log('Uploaded file URL:', profilePictureUrl);
 
-    const userId = results[0].user_id;
-
-    // Check if profile exists for the user
-    const checkProfileQuery = "SELECT * FROM profile WHERE user_id = ?";
-    db.query(checkProfileQuery, [userId], (err, profileResults) => {
+    // Get user_id from users table
+    const getUserQuery = "SELECT user_id FROM users WHERE email = ?";
+    db.query(getUserQuery, [email], (err, results) => {
       if (err) {
         console.error("Database error:", err);
         return res.status(500).json({ error: "Database error" });
       }
 
-      if (profileResults.length === 0) {
-        // Insert new profile if it doesn't exist
-        const insertProfileQuery = "INSERT INTO profile (user_id, profile_picture) VALUES (?, ?)";
-        db.query(insertProfileQuery, [userId, profilePictureUrl], (err, insertResults) => {
-          if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ error: "Database error" });
-          }
-
-          res.status(200).json({ message: "Profile picture uploaded successfully", profilePictureUrl });
-        });
-      } else {
-        // Update profile picture if profile exists
-        const updateProfileQuery = "UPDATE profile SET profile_picture = ? WHERE user_id = ?";
-        db.query(updateProfileQuery, [profilePictureUrl, userId], (err, updateResults) => {
-          if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ error: "Database error" });
-          }
-
-          res.status(200).json({ message: "Profile picture uploaded successfully", profilePictureUrl });
-        });
+      if (results.length === 0) {
+        console.error("User not found");
+        return res.status(400).json({ error: "User not found" });
       }
+
+      const userId = results[0].user_id;
+
+      // Check if profile exists for the user
+      const checkProfileQuery = "SELECT * FROM profile WHERE user_id = ?";
+      db.query(checkProfileQuery, [userId], (err, profileResults) => {
+        if (err) {
+          console.error("Database error:", err);
+          return res.status(500).json({ error: "Database error" });
+        }
+
+        if (profileResults.length === 0) {
+          // Insert new profile if it doesn't exist
+          const insertProfileQuery = "INSERT INTO profile (user_id, profile_picture) VALUES (?, ?)";
+          db.query(insertProfileQuery, [userId, profilePictureUrl], (err, insertResults) => {
+            if (err) {
+              console.error("Database error:", err);
+              return res.status(500).json({ error: "Database error" });
+            }
+
+            res.status(200).json({ message: "Profile picture uploaded successfully", profilePictureUrl });
+          });
+        } else {
+          // Update profile picture if profile exists
+          const updateProfileQuery = "UPDATE profile SET profile_picture = ? WHERE user_id = ?";
+          db.query(updateProfileQuery, [profilePictureUrl, userId], (err, updateResults) => {
+            if (err) {
+              console.error("Database error:", err);
+              return res.status(500).json({ error: "Database error" });
+            }
+
+            res.status(200).json({ message: "Profile picture uploaded successfully", profilePictureUrl });
+          });
+        }
+      });
     });
-  });
+  } catch (error) {
+    console.error('Error uploading to ImgBB:', error);
+    res.status(500).json({ error: 'Error uploading to ImgBB' });
+  }
 });
 
 // Route: Remove Profile Picture
@@ -503,7 +505,7 @@ app.delete('/remove-profile-picture', (req, res) => {
 });
 
 // Route: Upload Photo
-app.post('/upload-photo', upload.single('photo'), (req, res) => {
+app.post('/upload-photo', upload.single('photo'), async (req, res) => {
   console.log("Route /upload-photo hit");
   const token = req.headers.authorization.split(' ')[1];
   let decoded;
@@ -520,41 +522,55 @@ app.post('/upload-photo', upload.single('photo'), (req, res) => {
     return res.status(400).json({ error: 'No file uploaded' });
   }
 
-  const photoUrl = req.file.path;
-  console.log('Uploaded file path:', photoUrl);
+  try {
+    // Upload image to ImgBB
+    const formData = new FormData();
+    formData.append('image', req.file.buffer.toString('base64'));
+    formData.append('key', IMGBB_API_KEY);
 
-  let { country, height, build, profession } = req.body;
+    const response = await axios.post('https://api.imgbb.com/1/upload', formData, {
+      headers: formData.getHeaders()
+    });
 
-  // Get user_id from users table
-  const getUserQuery = "SELECT user_id FROM users WHERE email = ?";
-  db.query(getUserQuery, [email], (err, results) => {
-    if (err) {
-      console.error("Database error:", err);
-      return res.status(500).json({ error: "Database error" });
-    }
+    const photoUrl = response.data.data.url;
+    console.log('Uploaded file URL:', photoUrl);
 
-    if (results.length === 0) {
-      console.error("User not found");
-      return res.status(400).json({ error: "User not found" });
-    }
+    let { country, height, build, profession } = req.body;
 
-    const userId = results[0].user_id;
-
-    // Insert photo details into photos table
-    const insertPhotoQuery = `
-      INSERT INTO photos (user_id, country, height, build, profession, photo_url)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `;
-    db.query(insertPhotoQuery, [userId, country, height, build, profession, photoUrl], (err, insertResults) => {
+    // Get user_id from users table
+    const getUserQuery = "SELECT user_id FROM users WHERE email = ?";
+    db.query(getUserQuery, [email], (err, results) => {
       if (err) {
         console.error("Database error:", err);
         return res.status(500).json({ error: "Database error" });
       }
 
-      const photoId = insertResults.insertId;
-      res.status(200).json({ message: "Photo uploaded successfully", photoId: photoId });
+      if (results.length === 0) {
+        console.error("User not found");
+        return res.status(400).json({ error: "User not found" });
+      }
+
+      const userId = results[0].user_id;
+
+      // Insert photo details into photos table
+      const insertPhotoQuery = `
+        INSERT INTO photos (user_id, country, height, build, profession, photo_url)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `;
+      db.query(insertPhotoQuery, [userId, country, height, build, profession, photoUrl], (err, insertResults) => {
+        if (err) {
+          console.error("Database error:", err);
+          return res.status(500).json({ error: "Database error" });
+        }
+
+        const photoId = insertResults.insertId;
+        res.status(200).json({ message: "Photo uploaded successfully", photoId: photoId });
+      });
     });
-  });
+  } catch (error) {
+    console.error('Error uploading to ImgBB:', error);
+    res.status(500).json({ error: 'Error uploading to ImgBB' });
+  }
 });
 
 // Route: Get User Profile
