@@ -461,7 +461,7 @@ app.post('/upload-profile-picture', upload.single('image'), async (req, res) => 
       });
     });
   } catch (error) {
-    console.error('Error uploading to ImgBB:', error);
+    console.error('Error uploading to ImgBB:', error.response ? error.response.data : error.message);
     res.status(500).json({ error: 'Error uploading to ImgBB' });
   }
 });
