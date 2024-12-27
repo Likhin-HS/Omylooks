@@ -16,8 +16,8 @@ limitations under the License.
 */
 function navigateTo(page) {
   if (page === 'signup') {
-  window.location.href = '../../frontend/username.html';
+  window.location.href = 'username.html';
   } else if (page === 'login') {
-  window.location.href = '../../frontend/login.html';
+  window.location.href = 'login.html';
   }
 }
