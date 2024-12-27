@@ -1,4 +1,3 @@
-
 /*
 Copyright 2024 Likhin H S
 
@@ -16,7 +15,7 @@ limitations under the License.
 */
 function navigateTo(page) {
   if (page === 'signup') {
-  window.location.href = 'username.html';
+  window.location.href = 'frontend/username.html';
   } else if (page === 'login') {
   window.location.href = 'login.html';
   }
