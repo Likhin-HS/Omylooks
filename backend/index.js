@@ -33,6 +33,12 @@ const port = 3000;
 app.use(cors());
 app.use(bodyParser.json({ limit: '10mb' })); // Increase limit for base64 image data
 
+// Log all incoming requests
+app.use((req, res, next) => {
+  console.log(`Incoming request: ${req.method} ${req.url}`);
+  next();
+});
+
 // Serve static files from the uploads directory
 app.use('/uploads', express.static('uploads'));
 
@@ -146,8 +152,14 @@ app.use('/api', reportProblemRoute);
 const helpImproveRoute = require('./routes/helpImprove');
 app.use('/api', helpImproveRoute);
 
+// Route: Root URL
+app.get("/", (req, res) => {
+  res.send("Welcome to Omylooks API");
+});
+
 // Route: Check Username
 app.get("/check-username", (req, res) => {
+  console.log("Route /check-username hit");
   const username = req.query.username;
 
   if (!username) {
@@ -171,6 +183,7 @@ app.get("/check-username", (req, res) => {
 
 // Route: Check Email Availability
 app.get("/check-email", (req, res) => {
+  console.log("Route /check-email hit");
   const { email } = req.query;
 
   if (!email) {
@@ -201,6 +214,7 @@ app.get("/check-email", (req, res) => {
 
 // Route: Register Username
 app.post("/register-username", (req, res) => {
+  console.log("Route /register-username hit");
   let { username } = req.body;
 
   if (!username) {
@@ -223,6 +237,7 @@ app.post("/register-username", (req, res) => {
 
 // Route: Register Email
 app.post("/register-email", (req, res) => {
+  console.log("Route /register-email hit");
   const { username, email } = req.body;
 
   if (!username || !email) {
@@ -243,6 +258,7 @@ app.post("/register-email", (req, res) => {
 
 // Route: Save Password
 app.post("/register-password", async (req, res) => {
+  console.log("Route /register-password hit");
   const { username, password } = req.body;
 
   if (!username || !password) {
@@ -271,6 +287,7 @@ app.post("/register-password", async (req, res) => {
 
 // Route: Send OTP
 app.post("/send-otp", (req, res) => {
+  console.log("Route /send-otp hit");
   const { email } = req.body;
 
   if (!email) {
@@ -308,6 +325,7 @@ app.post("/send-otp", (req, res) => {
 
 // Route: Verify OTP
 app.post("/verify-otp", (req, res) => {
+  console.log("Route /verify-otp hit");
   const { email, otp } = req.body;
 
   if (!email || !otp) {
@@ -358,6 +376,7 @@ app.post("/verify-otp", (req, res) => {
 
 // Route: Upload Profile Picture
 app.post('/upload-profile-picture', upload.single('image'), (req, res) => {
+  console.log("Route /upload-profile-picture hit");
   const token = req.headers.authorization.split(' ')[1];
   let decoded;
   try {
@@ -424,6 +443,7 @@ app.post('/upload-profile-picture', upload.single('image'), (req, res) => {
 
 // Route: Remove Profile Picture
 app.delete('/remove-profile-picture', (req, res) => {
+  console.log("Route /remove-profile-picture hit");
   const token = req.headers.authorization.split(' ')[1];
   let decoded;
   try {
@@ -462,6 +482,7 @@ app.delete('/remove-profile-picture', (req, res) => {
 
 // Route: Upload Photo
 app.post('/upload-photo', upload.single('photo'), (req, res) => {
+  console.log("Route /upload-photo hit");
   const token = req.headers.authorization.split(' ')[1];
   let decoded;
   try {
@@ -511,6 +532,7 @@ app.post('/upload-photo', upload.single('photo'), (req, res) => {
 
 // Route: Get User Profile
 app.get('/user-profile', (req, res) => {
+  console.log("Route /user-profile hit");
   const token = req.headers.authorization.split(' ')[1];
   let decoded;
   try {
@@ -539,6 +561,7 @@ app.get('/user-profile', (req, res) => {
 
 // Route: Get User Profile by ID
 app.get('/user-profile/:userId', (req, res) => {
+  console.log("Route /user-profile/:userId hit");
   const userId = req.params.userId;
 
   const query = "SELECT profile_picture, username FROM profile JOIN users ON profile.user_id = users.user_id WHERE users.user_id = ?";
@@ -560,6 +583,7 @@ app.get('/user-profile/:userId', (req, res) => {
 
 // Route: Get User Photos
 app.get('/profile', (req, res) => {
+  console.log("Route /profile hit");
   const token = req.headers.authorization.split(' ')[1];
   let decoded;
   try {
@@ -591,6 +615,7 @@ app.get('/profile', (req, res) => {
 
 // Route: Get User Photos by ID
 app.get('/profile/:userId', (req, res) => {
+  console.log("Route /profile/:userId hit");
   const userId = req.params.userId;
 
   const query = `
@@ -615,6 +640,7 @@ app.get('/profile/:userId', (req, res) => {
 
 // Route: Login
 app.post('/login', (req, res) => {
+  console.log("Route /login hit");
   const { identifier, password } = req.body;
 
   if (!identifier || !password) {
@@ -646,6 +672,7 @@ app.post('/login', (req, res) => {
 
 // Route: Get Random Photo
 app.get('/random-photo', (req, res) => {
+  console.log("Route /random-photo hit");
   const token = req.headers.authorization.split(' ')[1];
   let decoded;
   try {
@@ -690,6 +717,7 @@ app.get('/random-photo', (req, res) => {
 
 // Route: Submit Rating
 app.post('/rate-photo', (req, res) => {
+  console.log("Route /rate-photo hit");
   const token = req.headers.authorization.split(' ')[1];
   let decoded;
   try {
@@ -759,6 +787,7 @@ app.post('/rate-photo', (req, res) => {
 
 // Route: Delete Photo
 app.delete('/photos/:photoId', (req, res) => {
+  console.log("Route /photos/:photoId hit");
   const token = req.headers.authorization.split(' ')[1];
   let decoded;
   try {
@@ -796,6 +825,7 @@ app.delete('/photos/:photoId', (req, res) => {
 
 // Route: Reset Password
 app.post("/reset-password", async (req, res) => {
+  console.log("Route /reset-password hit");
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -827,6 +857,7 @@ app.post("/reset-password", async (req, res) => {
 
 // Route: Change Username
 app.post("/change-username", (req, res) => {
+  console.log("Route /change-username hit");
   const token = req.headers.authorization.split(' ')[1];
   let decoded;
   try {
@@ -854,6 +885,7 @@ app.post("/change-username", (req, res) => {
 
 // Route: Delete Account
 app.delete('/delete-account', (req, res) => {
+  console.log("Route /delete-account hit");
   const token = req.headers.authorization.split(' ')[1];
   let decoded;
   try {
@@ -940,5 +972,5 @@ wss.on('connection', (ws) => {
 
 // Start server
 server.listen(port, () => {
-  console.log(`Server running on https://omylooks.onrender.com`);
+  console.log(`Server running on ${port}`);
 });
