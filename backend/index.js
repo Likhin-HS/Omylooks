@@ -445,7 +445,7 @@ app.post('/upload-profile-picture', upload.single('image'), (req, res) => {
             return res.status(500).json({ error: "Database error" });
           }
 
-          res.status(200).json({ message: "Profile picture uploaded successfully" });
+          res.status(200).json({ message: "Profile picture uploaded successfully", profilePictureUrl });
         });
       } else {
         // Update profile picture if profile exists
@@ -456,7 +456,7 @@ app.post('/upload-profile-picture', upload.single('image'), (req, res) => {
             return res.status(500).json({ error: "Database error" });
           }
 
-          res.status(200).json({ message: "Profile picture uploaded successfully" });
+          res.status(200).json({ message: "Profile picture uploaded successfully", profilePictureUrl });
         });
       }
     });
@@ -580,7 +580,7 @@ app.get('/user-profile', (req, res) => {
       return res.status(404).json({ error: "Profile not found" });
     }
 
-    const profilePictureUrl = results[0].profile_picture ? `https://omylooks.onrender.com/${results[0].profile_picture}` : null;
+    const profilePictureUrl = results[0].profile_picture ? results[0].profile_picture : null;
     const username = results[0].username;
     res.status(200).json({ profilePictureUrl, username });
   });
