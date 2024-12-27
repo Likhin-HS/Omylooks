@@ -411,6 +411,7 @@ app.post('/upload-profile-picture', upload.single('image'), (req, res) => {
   }
 
   const profilePictureUrl = req.file.path;
+  console.log('Uploaded file path:', profilePictureUrl);
 
   // Get user_id from users table
   const getUserQuery = "SELECT user_id FROM users WHERE email = ?";
@@ -509,16 +510,20 @@ app.post('/upload-photo', upload.single('photo'), (req, res) => {
   try {
     decoded = jwt.verify(token, process.env.JWT_SECRET);
   } catch (err) {
+    console.error('JWT verification error:', err);
     return res.status(401).json({ error: 'Invalid token' });
   }
   const email = decoded.email;
 
   if (!req.file) {
+    console.error('No file uploaded');
     return res.status(400).json({ error: 'No file uploaded' });
   }
 
-  let { country, height, build, profession } = req.body;
   const photoUrl = req.file.path;
+  console.log('Uploaded file path:', photoUrl);
+
+  let { country, height, build, profession } = req.body;
 
   // Get user_id from users table
   const getUserQuery = "SELECT user_id FROM users WHERE email = ?";
@@ -529,6 +534,7 @@ app.post('/upload-photo', upload.single('photo'), (req, res) => {
     }
 
     if (results.length === 0) {
+      console.error("User not found");
       return res.status(400).json({ error: "User not found" });
     }
 

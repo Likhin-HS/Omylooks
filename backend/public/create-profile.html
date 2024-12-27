@@ -226,20 +226,25 @@ limitations under the License.
 
           // Send the image data to the server
           console.log('Sending image data to server...');
-          const response = await fetch('https://omylooks.onrender.com/upload-profile-picture', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}` // Include JWT token
-            },
-            body: formData
-          });
+          try {
+            const response = await fetch('https://omylooks.onrender.com/upload-profile-picture', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}` // Include JWT token
+              },
+              body: formData
+            });
 
-          if (response.ok) {
-            window.location.href = 'profile.html'; // Redirect to profile.html
-          } else {
-            const errorData = await response.json();
-            console.error('Failed to upload profile picture:', errorData.error);
-            alert(`Failed to upload profile picture: ${errorData.error}`);
+            if (response.ok) {
+              window.location.href = 'profile.html'; // Redirect to profile.html
+            } else {
+              const errorData = await response.json();
+              console.error('Failed to upload profile picture:', errorData.error);
+              alert(`Failed to upload profile picture: ${errorData.error}`);
+            }
+          } catch (error) {
+            console.error('Fetch error:', error);
+            alert('Error occurred. Please try again.');
           }
         }, 'image/png');
       } else {
