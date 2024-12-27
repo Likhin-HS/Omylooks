@@ -61,7 +61,7 @@ limitations under the License.
       }
 
       // Fetch user profile
-      fetch(`http://localhost:3000/user-profile/${userId}`, {
+      fetch(`https://omylooks.onrender.com/user-profile/${userId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
         .then(response => {
@@ -87,7 +87,7 @@ limitations under the License.
     function fetchPhotos(userId) {
       const token = localStorage.getItem('token'); 
       
-      fetch(`http://localhost:3000/profile/${userId}`, {
+      fetch(`https://omylooks.onrender.com/profile/${userId}`, {
         method: 'GET',
         headers: { 'Authorization': `Bearer ${token}` }
       })
@@ -112,7 +112,7 @@ limitations under the License.
     
           // Image element
           const img = document.createElement('img');
-          img.src = `http://localhost:3000/${photo.photo_url}`;
+          img.src = `https://omylooks.onrender.com/${photo.photo_url}`;
           img.alt = "User photo";
     
           // Average Rating at the Top

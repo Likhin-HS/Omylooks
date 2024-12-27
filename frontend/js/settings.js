@@ -17,7 +17,7 @@ limitations under the License.
 function confirmRemoveProfilePicture() {
   if (confirm("Are you sure you want to remove your profile picture?")) {
     const token = localStorage.getItem('token'); // Assuming token is stored in localStorage
-    fetch('http://localhost:3000/remove-profile-picture', {
+    fetch('https://omylooks.onrender.com/remove-profile-picture', {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,

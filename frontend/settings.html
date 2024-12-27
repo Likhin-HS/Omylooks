@@ -85,7 +85,7 @@ limitations under the License.
       const confirmationInput = document.getElementById('delete-confirmation-input').value;
       if (confirmationInput === 'DELETE') {
         const token = localStorage.getItem('token');
-        fetch('http://localhost:3000/delete-account', {
+        fetch('https://omylooks.onrender.com/delete-account', {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`,

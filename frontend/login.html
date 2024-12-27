@@ -116,7 +116,7 @@ limitations under the License.
       }
 
       try {
-        const response = await axios.post('http://localhost:3000/login', { identifier, password });
+        const response = await axios.post('https://omylooks.onrender.com/login', { identifier, password });
         if (response.data.token) {
           localStorage.setItem('token', response.data.token);
           alert('Login Successful!');

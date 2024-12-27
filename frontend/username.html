@@ -193,7 +193,7 @@ limitations under the License.
       }
 
       // Check username availability
-      fetch(`http://localhost:3000/check-username?username=${username}`)
+      fetch(`https://omylooks.onrender.com/check-username?username=${username}`)
         .then((response) => {
           if (response.ok) {
             return response.json(); // Parse JSON for success responses
@@ -235,7 +235,7 @@ limitations under the License.
       let username = usernameInput.value.trim().toLowerCase(); // Convert username to lowercase
       localStorage.setItem('username', username); // Store username in localStorage
 
-      fetch('http://localhost:3000/register-username', {
+      fetch('https://omylooks.onrender.com/register-username', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

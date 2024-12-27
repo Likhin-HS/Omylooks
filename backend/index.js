@@ -531,7 +531,7 @@ app.get('/user-profile', (req, res) => {
       return res.status(404).json({ error: "Profile not found" });
     }
 
-    const profilePictureUrl = results[0].profile_picture ? `http://localhost:3000/${results[0].profile_picture}` : null;
+    const profilePictureUrl = results[0].profile_picture ? `https://omylooks.onrender.com/${results[0].profile_picture}` : null;
     const username = results[0].username;
     res.status(200).json({ profilePictureUrl, username });
   });
@@ -552,7 +552,7 @@ app.get('/user-profile/:userId', (req, res) => {
       return res.status(404).json({ error: "Profile not found" });
     }
 
-    const profilePictureUrl = results[0].profile_picture ? `http://localhost:3000/${results[0].profile_picture}` : null;
+    const profilePictureUrl = results[0].profile_picture ? `https://omylooks.onrender.com/${results[0].profile_picture}` : null;
     const username = results[0].username;
     res.status(200).json({ profilePictureUrl, username });
   });
@@ -676,14 +676,14 @@ app.get('/random-photo', (req, res) => {
     const photo = results[0];
     res.status(200).json({
       photoId: photo.photo_id,
-      photoUrl: `http://localhost:3000/${photo.photo_url}`,
+      photoUrl: `https://omylooks.onrender.com/${photo.photo_url}`,
       country: photo.country,
       height: photo.height,
       build: photo.build,
       profession: photo.profession,
       userId: photo.user_id, // Include user ID in the response
       username: photo.username,
-      profilePictureUrl: photo.profile_picture ? `http://localhost:3000/${photo.profile_picture}` : null
+      profilePictureUrl: photo.profile_picture ? `https://omylooks.onrender.com/${photo.profile_picture}` : null
     });
   });
 });
@@ -940,5 +940,5 @@ wss.on('connection', (ws) => {
 
 // Start server
 server.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+  console.log(`Server running on https://omylooks.onrender.com`);
 });

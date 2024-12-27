@@ -116,7 +116,7 @@ limitations under the License.
       const feedbackDescription = document.getElementById('feedback-description').value;
       const token = localStorage.getItem('token'); // Assuming the token is stored in localStorage
 
-      axios.post('http://localhost:3000/api/help-improve', {
+      axios.post('https://omylooks.onrender.com/api/help-improve', {
         description: feedbackDescription
       }, {
         headers: {

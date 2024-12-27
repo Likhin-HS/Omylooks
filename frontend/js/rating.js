@@ -217,7 +217,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     axios
-      .get("http://localhost:3000/random-photo", {
+      .get("https://omylooks.onrender.com/random-photo", {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((response) => {
@@ -298,7 +298,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     axios
       .post(
-        "http://localhost:3000/rate-photo",
+        "https://omylooks.onrender.com/rate-photo",
         {
           photoId,
           rating,
@@ -371,7 +371,7 @@ document.addEventListener("DOMContentLoaded", () => {
 function fetchPhotos(userId) {
   const token = localStorage.getItem('token'); 
   
-  fetch(`http://localhost:3000/profile/${userId}`, {
+  fetch(`https://omylooks.onrender.com/profile/${userId}`, {
     method: 'GET',
     headers: { 'Authorization': `Bearer ${token}` }
   })
