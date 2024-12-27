@@ -400,11 +400,13 @@ app.post('/upload-profile-picture', upload.single('image'), (req, res) => {
   try {
     decoded = jwt.verify(token, process.env.JWT_SECRET);
   } catch (err) {
+    console.error('JWT verification error:', err);
     return res.status(401).json({ error: 'Invalid token' });
   }
   const email = decoded.email;
 
   if (!req.file) {
+    console.error('No file uploaded');
     return res.status(400).json({ error: 'No file uploaded' });
   }
 
@@ -419,6 +421,7 @@ app.post('/upload-profile-picture', upload.single('image'), (req, res) => {
     }
 
     if (results.length === 0) {
+      console.error("User not found");
       return res.status(400).json({ error: "User not found" });
     }
 
