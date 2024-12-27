@@ -145,6 +145,7 @@ if (!fs.existsSync(uploadDir)) {
 
 // Add ImgBB API key
 const IMGBB_API_KEY = process.env.IMGBB_API_KEY;
+console.log('IMGBB_API_KEY:', process.env.IMGBB_API_KEY);
 
 // Configure multer for file uploads
 const storage = multer.memoryStorage(); // Use memory storage for multer
