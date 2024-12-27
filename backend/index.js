@@ -42,6 +42,9 @@ app.use((req, res, next) => {
 // Serve static files from the uploads directory
 app.use('/uploads', express.static('uploads'));
 
+// Serve static files from the public directory
+app.use(express.static('public'));
+
 // Database connection
 const db = mysql.createConnection({
   host: process.env.DB_HOST,        // Database host
