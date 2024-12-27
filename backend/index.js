@@ -24,6 +24,8 @@ const multer = require('multer'); // Add multer for file uploads
 const fs = require('fs'); // Add fs for file system operations
 const http = require('http'); // Add http for WebSocket server
 const WebSocket = require('ws'); // Add WebSocket library
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 require('dotenv').config();
 
 const app = express();
@@ -142,13 +144,20 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// Configure multer-storage-cloudinary
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'uploads',
+    format: async (req, file) => 'png', // supports promises as well
+    public_id: (req, file) => `${Date.now()}-${file.originalname}`
   }
 });
 const upload = multer({ storage: storage });
@@ -399,7 +408,7 @@ app.post('/upload-profile-picture', upload.single('image'), (req, res) => {
     return res.status(400).json({ error: 'No file uploaded' });
   }
 
-  const profilePicturePath = req.file.path;
+  const profilePictureUrl = req.file.path;
 
   // Get user_id from users table
   const getUserQuery = "SELECT user_id FROM users WHERE email = ?";
@@ -426,7 +435,7 @@ app.post('/upload-profile-picture', upload.single('image'), (req, res) => {
       if (profileResults.length === 0) {
         // Insert new profile if it doesn't exist
         const insertProfileQuery = "INSERT INTO profile (user_id, profile_picture) VALUES (?, ?)";
-        db.query(insertProfileQuery, [userId, profilePicturePath], (err, insertResults) => {
+        db.query(insertProfileQuery, [userId, profilePictureUrl], (err, insertResults) => {
           if (err) {
             console.error("Database error:", err);
             return res.status(500).json({ error: "Database error" });
@@ -437,7 +446,7 @@ app.post('/upload-profile-picture', upload.single('image'), (req, res) => {
       } else {
         // Update profile picture if profile exists
         const updateProfileQuery = "UPDATE profile SET profile_picture = ? WHERE user_id = ?";
-        db.query(updateProfileQuery, [profilePicturePath, userId], (err, updateResults) => {
+        db.query(updateProfileQuery, [profilePictureUrl, userId], (err, updateResults) => {
           if (err) {
             console.error("Database error:", err);
             return res.status(500).json({ error: "Database error" });
@@ -490,58 +499,51 @@ app.delete('/remove-profile-picture', (req, res) => {
 });
 
 // Route: Upload Photo
-app.post('/upload-photo', (req, res) => {
-  upload.single('photo')(req, res, (err) => {
+app.post('/upload-photo', upload.single('photo'), (req, res) => {
+  console.log("Route /upload-photo hit");
+  const token = req.headers.authorization.split(' ')[1];
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (err) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+  const email = decoded.email;
+
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+
+  let { country, height, build, profession } = req.body;
+  const photoUrl = req.file.path;
+
+  // Get user_id from users table
+  const getUserQuery = "SELECT user_id FROM users WHERE email = ?";
+  db.query(getUserQuery, [email], (err, results) => {
     if (err) {
-      console.error("File upload error:", err);
-      return res.status(500).json({ error: "File upload error" });
+      console.error("Database error:", err);
+      return res.status(500).json({ error: "Database error" });
     }
 
-    console.log("Route /upload-photo hit");
-    const token = req.headers.authorization.split(' ')[1];
-    let decoded;
-    try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
-    } catch (err) {
-      return res.status(401).json({ error: 'Invalid token' });
-    }
-    const email = decoded.email;
-
-    if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
+    if (results.length === 0) {
+      return res.status(400).json({ error: "User not found" });
     }
 
-    let { country, height, build, profession } = req.body;
-    const photoUrl = req.file.path;
+    const userId = results[0].user_id;
 
-    // Get user_id from users table
-    const getUserQuery = "SELECT user_id FROM users WHERE email = ?";
-    db.query(getUserQuery, [email], (err, results) => {
+    // Insert photo details into photos table
+    const insertPhotoQuery = `
+      INSERT INTO photos (user_id, country, height, build, profession, photo_url)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `;
+    db.query(insertPhotoQuery, [userId, country, height, build, profession, photoUrl], (err, insertResults) => {
       if (err) {
         console.error("Database error:", err);
         return res.status(500).json({ error: "Database error" });
       }
 
-      if (results.length === 0) {
-        return res.status(400).json({ error: "User not found" });
-      }
-
-      const userId = results[0].user_id;
-
-      // Insert photo details into photos table
-      const insertPhotoQuery = `
-        INSERT INTO photos (user_id, country, height, build, profession, photo_url)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `;
-      db.query(insertPhotoQuery, [userId, country, height, build, profession, photoUrl], (err, insertResults) => {
-        if (err) {
-          console.error("Database error:", err);
-          return res.status(500).json({ error: "Database error" });
-        }
-
-        const photoId = insertResults.insertId;
-        res.status(200).json({ message: "Photo uploaded successfully", photoId: photoId });
-      });
+      const photoId = insertResults.insertId;
+      res.status(200).json({ message: "Photo uploaded successfully", photoId: photoId });
     });
   });
 });
